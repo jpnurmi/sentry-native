@@ -574,6 +574,7 @@ elseif(SENTRY_BACKEND_INPROC)
 endif()
 
 option(SENTRY_INTEGRATION_QT "Build Qt integration")
+option(SENTRY_WITH_QTGUI "Link to QtGui for screenshot support")
 if(SENTRY_INTEGRATION_QT)
 	if(QT_DEFAULT_MAJOR_VERSION)
 		# Let user choose major version
@@ -586,6 +587,10 @@ if(SENTRY_INTEGRATION_QT)
 	message(STATUS "Found Qt: ${Qt${Qt_VERSION_MAJOR}_DIR} "
 		"(found version \"${Qt${Qt_VERSION_MAJOR}_VERSION}\")")
 	target_link_libraries(sentry PRIVATE Qt${Qt_VERSION_MAJOR}::Core)
+	if(SENTRY_WITH_QTGUI)
+		find_package(Qt${Qt_VERSION_MAJOR} COMPONENTS Gui REQUIRED)
+		target_link_libraries(sentry PRIVATE Qt${Qt_VERSION_MAJOR}::Gui)
+	endif()
 endif()
 
 include(CMakePackageConfigHelpers)
