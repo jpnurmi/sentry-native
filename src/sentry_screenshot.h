@@ -3,19 +3,19 @@
 
 #include "sentry_boot.h"
 
-#include "sentry_options.h"
 #include "sentry_path.h"
 
 /**
- * Captures a screenshot and saves it to the specified path.
+ * Captures screenshots and saves them to the specified dir.
  *
- * Returns true if the screenshot was successfully captured and saved.
+ * Returns the number of screenshots that were successfully captured and saved.
  */
-bool sentry__screenshot_capture(const sentry_path_t *path);
+int sentry__screenshot_capture(const sentry_path_t *dir);
 
 /**
- * Returns the path where a screenshot should be saved.
+ * Returns the path where a screenshot at the specified index should be saved.
  */
-sentry_path_t *sentry__screenshot_get_path(const sentry_options_t *options);
+sentry_path_t *sentry__screenshot_get_path(
+    const sentry_path_t *dir, size_t index);
 
 #endif

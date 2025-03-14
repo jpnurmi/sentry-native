@@ -315,6 +315,21 @@ sentry__crashpad_handler(int signum, siginfo_t *info, ucontext_t *user_context)
                 sentry_envelope_t *envelope = sentry__envelope_new();
                 sentry__envelope_add_session(envelope, session);
 
+#    ifndef SENTRY_PLATFORM_WINDOWS
+                if (options->attach_screenshot) {
+                    size_t count
+                        = sentry__screenshot_capture(options->run->run_path);
+                    for (size_t i = 0; i < count; i++) {
+                        sentry_path_t *screenshot_path
+                            = sentry__screenshot_get_path(
+                                options->run->run_path, i);
+                        sentry__envelope_add_attachment(
+                            envelope, screenshot_path, NULL);
+                        sentry__path_free(screenshot_path);
+                    }
+                }
+#    endif
+
                 // capture the envelope with the disk transport
                 sentry_transport_t *disk_transport
                     = sentry_new_disk_transport(options->run);
@@ -448,9 +463,23 @@ crashpad_backend_startup(
 
     base::FilePath screenshot;
     if (options->attach_screenshot) {
-        sentry_path_t *screenshot_path = sentry__screenshot_get_path(options);
+#ifdef SENTRY_PLATFORM_WINDOWS
+        // On Windows, let the crashpad handler capture a screenshot.
+        sentry_path_t *screenshot_path
+            = sentry__screenshot_get_path(options->run->run_path, 0);
         screenshot = base::FilePath(screenshot_path->path);
         sentry__path_free(screenshot_path);
+#else
+        // On other platforms (Linux + Qt integration), attach locally captured
+        // screenshot.png, screenshot-1.png, and screenshot-2.png.
+        // TODO: support wildcards in crashpad handler attachments?
+        for (size_t i = 0; i < 3; i++) {
+            sentry_path_t *screenshot_path
+                = sentry__screenshot_get_path(options->run->run_path, i);
+            attachments.push_back(base::FilePath(screenshot_path->path));
+            sentry__path_free(screenshot_path);
+        }
+#endif
     }
 
     std::vector<std::string> arguments { "--no-rate-limit" };

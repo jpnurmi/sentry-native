@@ -143,8 +143,8 @@ calculate_region(DWORD pid, HRGN region)
     }
 }
 
-bool
-sentry__screenshot_capture(const sentry_path_t *path)
+int
+sentry__screenshot_capture(const sentry_path_t *dir)
 {
     HRGN region = CreateRectRgn(0, 0, 0, 0);
     calculate_region(GetCurrentProcessId(), region);
@@ -167,6 +167,7 @@ sentry__screenshot_capture(const sentry_path_t *path)
     SelectClipRgn(hdc, region);
     BitBlt(hdc, 0, 0, width, height, src, box.left, box.top, SRCCOPY);
 
+    sentry_path_t *path = sentry__screenshot_get_path(dir, 0);
     bool rv = save_bitmap(bitmap, path->path);
     if (!rv) {
         SENTRY_WARNF(
@@ -174,6 +175,7 @@ sentry__screenshot_capture(const sentry_path_t *path)
     } else {
         SENTRY_DEBUGF("Saved screenshot: \"%" SENTRY_PATH_PRI "\"", path->path);
     }
+    sentry__path_free(path);
 
     DeleteObject(bitmap);
     DeleteDC(hdc);

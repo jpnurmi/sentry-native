@@ -4,7 +4,8 @@
 
 **Features**:
 
-- Add option to attach screenshots on Windows to fatal error events. ([#1170](https://github.com/getsentry/sentry-native/pull/1170))
+- Add option to attach screenshots to fatal error events on Windows ([#1170](https://github.com/getsentry/sentry-native/pull/1170)),
+  and with Qt integration on Linux (TODO).
 
 ## 0.8.2
 

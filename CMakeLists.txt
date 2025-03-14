@@ -574,6 +574,8 @@ elseif(SENTRY_BACKEND_INPROC)
 endif()
 
 option(SENTRY_INTEGRATION_QT "Build Qt integration")
+option(SENTRY_WITH_QTWIDGETS "Link to QtWidgets for screenshot support")
+option(SENTRY_WITH_QTQUICK "Link to QtQuick for screenshot support")
 if(SENTRY_INTEGRATION_QT)
 	if(QT_DEFAULT_MAJOR_VERSION)
 		# Let user choose major version
@@ -586,6 +588,14 @@ if(SENTRY_INTEGRATION_QT)
 	message(STATUS "Found Qt: ${Qt${Qt_VERSION_MAJOR}_DIR} "
 		"(found version \"${Qt${Qt_VERSION_MAJOR}_VERSION}\")")
 	target_link_libraries(sentry PRIVATE Qt${Qt_VERSION_MAJOR}::Core)
+	if(SENTRY_WITH_QTWIDGETS)
+		find_package(Qt${Qt_VERSION_MAJOR} COMPONENTS Widgets REQUIRED)
+		target_link_libraries(sentry PRIVATE Qt${Qt_VERSION_MAJOR}::Widgets)
+	endif()
+	if(SENTRY_WITH_QTQUICK)
+		find_package(Qt${Qt_VERSION_MAJOR} COMPONENTS Quick REQUIRED)
+		target_link_libraries(sentry PRIVATE Qt${Qt_VERSION_MAJOR}::Quick)
+	endif()
 endif()
 
 include(CMakePackageConfigHelpers)

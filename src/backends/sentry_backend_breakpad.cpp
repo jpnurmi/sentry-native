@@ -166,13 +166,16 @@ breakpad_backend_callback(const google_breakpad::MinidumpDescriptor &descriptor,
             }
 
             if (options->attach_screenshot) {
-                sentry_path_t *screenshot_path
-                    = sentry__screenshot_get_path(options);
-                if (sentry__screenshot_capture(screenshot_path)) {
+                size_t count
+                    = sentry__screenshot_capture(options->run->run_path);
+                for (size_t i = 0; i < count; i++) {
+                    sentry_path_t *screenshot_path
+                        = sentry__screenshot_get_path(
+                            options->run->run_path, i);
                     sentry__envelope_add_attachment(
                         envelope, screenshot_path, NULL);
+                    sentry__path_free(screenshot_path);
                 }
-                sentry__path_free(screenshot_path);
             }
 
             // capture the envelope with the disk transport

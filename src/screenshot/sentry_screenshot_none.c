@@ -2,8 +2,8 @@
 
 #include "sentry_core.h"
 
-bool
-sentry__screenshot_capture(const sentry_path_t *UNUSED(path))
+int
+sentry__screenshot_capture(const sentry_path_t *UNUSED(dir))
 {
-    return false;
+    return 0;
 }

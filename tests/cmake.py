@@ -150,6 +150,9 @@ def cmake(cwd, targets, options=None):
         config_cmd.append("-DWITH_ASAN_OPTION=ON")
     if "tsan" in os.environ.get("RUN_ANALYZER", ""):
         config_cmd.append("-DWITH_TSAN_OPTION=ON")
+    if os.environ.get("TEST_QT"):
+        config_cmd.append("-DSENTRY_INTEGRATION_QT=ON")
+        config_cmd.append("-DSENTRY_WITH_QTWIDGETS=ON")
 
     # we have to set `-Werror` for this cmake invocation only, otherwise
     # completely unrelated things will break

@@ -1,13 +1,18 @@
 #include "sentry_screenshot.h"
 
-#include "sentry_database.h"
-
 sentry_path_t *
-sentry__screenshot_get_path(const sentry_options_t *options)
+sentry__screenshot_get_path(const sentry_path_t *dir, size_t index)
 {
 #ifdef SENTRY_PLATFORM_WINDOWS
-    return sentry__path_join_wstr(options->run->run_path, L"screenshot.png");
+    (void)index;
+    return sentry__path_join_wstr(dir, L"screenshot.png");
 #else
-    return sentry__path_join_str(options->run->run_path, "screenshot.png");
+    // screenshot.png, screenshot-1.png, screenshot-2.png, ...
+    if (index == 0) {
+        return sentry__path_join_str(dir, "screenshot.png");
+    }
+    char filename[20];
+    snprintf(filename, sizeof(filename), "screenshot-%zu.png", index);
+    return sentry__path_join_str(dir, filename);
 #endif
 }
