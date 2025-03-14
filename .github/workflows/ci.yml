@@ -65,6 +65,8 @@ jobs:
             # The GCC analyzer 10.0.1 (as on CI) has an internal compiler error
             # currently, and is not stable enough to activate.
             # RUN_ANALYZER: gcc
+            TEST_QT: 1
+            TEST_RUNNER: xvfb-run -a
           - name: Linux (clang 19 + asan + llvm-cov)
             os: ubuntu-24.04
             CC: clang-19
@@ -139,6 +141,7 @@ jobs:
     env:
       TEST_X86: ${{ matrix.TEST_X86 }}
       TEST_MINGW: ${{ matrix.TEST_MINGW }}
+      TEST_QT: ${{ matrix.TEST_QT }}
       ERROR_ON_WARNINGS: ${{ matrix.ERROR_ON_WARNINGS }}
       RUN_ANALYZER: ${{ matrix.RUN_ANALYZER }}
       ANDROID_API: ${{ matrix.ANDROID_API }}
@@ -184,6 +187,10 @@ jobs:
           sudo dpkg --add-architecture i386
           sudo apt update
           sudo apt install cmake gcc-9-multilib g++-9-multilib zlib1g-dev:i386 libssl-dev:i386 libcurl4-openssl-dev:i386
+
+      - name: Installing Qt for Linux
+        if: ${{ runner.os == 'Linux' && env['TEST_QT'] }}
+        run: sudo apt-get install qt6-base-dev libxkbcommon-dev xvfb
 
         # https://github.com/actions/runner-images/issues/9491
       - name: Decrease vm.mmap_rnd_bit to prevent ASLR ASAN issues
@@ -258,7 +265,7 @@ jobs:
           pip install --upgrade --requirement tests/requirements.txt
           [ "${{ matrix.CC }}" ] && export CC="${{ matrix.CC }}"
           [ "${{ matrix.CXX }}" ] && export CXX="${{ matrix.CXX }}"
-          pytest --capture=no --verbose tests
+          ${{ matrix.TEST_RUNNER }} pytest --capture=no --verbose tests
 
       - name: Check NDK
         if: ${{ env['ANDROID_API'] }}

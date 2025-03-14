@@ -260,6 +260,8 @@ endif()
 # we do not need this on android, only linux
 if(LINUX)
 	target_sources(sentry PRIVATE
+		"${PROJECT_SOURCE_DIR}/vendor/stb_image_write.c"
+		"${PROJECT_SOURCE_DIR}/vendor/stb_image_write.h"
 		"${PROJECT_SOURCE_DIR}/vendor/stb_sprintf.c"
 		"${PROJECT_SOURCE_DIR}/vendor/stb_sprintf.h"
 	)

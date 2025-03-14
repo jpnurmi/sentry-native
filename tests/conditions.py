@@ -7,6 +7,7 @@ is_x86 = os.environ.get("TEST_X86")
 is_asan = "asan" in os.environ.get("RUN_ANALYZER", "")
 is_kcov = "kcov" in os.environ.get("RUN_ANALYZER", "")
 is_valgrind = "valgrind" in os.environ.get("RUN_ANALYZER", "")
+is_x11 = sys.platform == "linux" and os.environ.get("XDG_SESSION_TYPE") == "x11"
 
 has_http = not is_android and not (sys.platform == "linux" and is_x86)
 # breakpad does not work correctly when using kcov or valgrind
@@ -28,3 +29,5 @@ has_crashpad = (
 )
 # android has no local filesystem
 has_files = not is_android
+# has qt available for testing
+has_qt = os.environ.get("TEST_QT")

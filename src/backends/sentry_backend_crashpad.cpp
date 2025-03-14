@@ -315,6 +315,19 @@ sentry__crashpad_handler(int signum, siginfo_t *info, ucontext_t *user_context)
                 sentry_envelope_t *envelope = sentry__envelope_new();
                 sentry__envelope_add_session(envelope, session);
 
+#    ifdef SENTRY_PLATFORM_LINUX
+                // TODO: add XCB support to crashpad_handler?
+                if (options->attach_screenshot) {
+                    sentry_path_t *screenshot_path
+                        = sentry__screenshot_get_path(options);
+                    if (sentry__screenshot_capture(screenshot_path)) {
+                        sentry__envelope_add_attachment(
+                            envelope, screenshot_path, NULL);
+                    }
+                    sentry__path_free(screenshot_path);
+                }
+#    endif
+
                 // capture the envelope with the disk transport
                 sentry_transport_t *disk_transport
                     = sentry_new_disk_transport(options->run);

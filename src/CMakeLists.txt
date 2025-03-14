@@ -172,6 +172,10 @@ if(WIN32)
 	sentry_target_sources_cwd(sentry
 		screenshot/sentry_screenshot_windows.c
 	)
+elseif(LINUX)
+	sentry_target_sources_cwd(sentry
+		screenshot/sentry_screenshot_linux.c
+	)
 else()
 	sentry_target_sources_cwd(sentry
 		screenshot/sentry_screenshot_none.c

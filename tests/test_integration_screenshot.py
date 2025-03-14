@@ -7,6 +7,7 @@ import sys
 import pytest
 
 from . import make_dsn, run
+from .conditions import is_x11, has_qt
 
 
 def assert_screenshot_file(database_path):
@@ -32,8 +33,8 @@ def assert_screenshot_upload(req):
 
 
 @pytest.mark.skipif(
-    sys.platform != "win32",
-    reason="Screenshots are only supported on Windows",
+    sys.platform != "win32" and (not is_x11 or not has_qt),
+    reason="Screenshots are only supported on Windows, or with Qt integration on Linux (X11)",
 )
 @pytest.mark.parametrize(
     "build_args",
@@ -59,7 +60,7 @@ def test_capture_screenshot(cmake, httpserver, build_args):
 
 @pytest.mark.skipif(
     sys.platform != "win32",
-    reason="Screenshots are only supported on Windows",
+    reason="Crashpad screenshots are only supported on Windows",
 )
 @pytest.mark.parametrize(
     "run_args",
@@ -90,7 +91,7 @@ def test_capture_screenshot_crashpad(cmake, httpserver, run_args):
 
 @pytest.mark.skipif(
     sys.platform != "win32",
-    reason="Screenshots are only supported on Windows",
+    reason="Fast-fail screenshots are only supported on Windows",
 )
 # this test currently can't run on CI because the Windows-image doesn't properly support WER, if you want to run the
 # test locally, invoke pytest with the --with_crashpad_wer option which is matched with this marker in the runtest setup

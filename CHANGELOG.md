@@ -5,6 +5,7 @@
 **Features**:
 
 - Provide an option for downstream SDKs to attach a view hierarchy file. ([#1191](https://github.com/getsentry/sentry-native/pull/1191))
+- Add option to attach screenshots to fatal error events on Linux (X11). ([#TODO](https://github.com/getsentry/sentry-native/pull/TODO))
 
 ## 0.8.3
 
