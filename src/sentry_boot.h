@@ -37,6 +37,12 @@
 #    define __has_builtin(x) 0
 #endif
 
+#ifdef __cplusplus
+#    define C_API extern "C"
+#else
+#    define C_API
+#endif
+
 #include <sentry.h>
 #include <stdbool.h>
 

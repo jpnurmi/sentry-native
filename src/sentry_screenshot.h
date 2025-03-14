@@ -11,7 +11,7 @@
  *
  * Returns true if the screenshot was successfully captured and saved.
  */
-bool sentry__screenshot_capture(const sentry_path_t *path);
+C_API bool sentry__screenshot_capture(const sentry_path_t *path);
 
 /**
  * Returns the path where a screenshot should be saved.

@@ -16,7 +16,7 @@ void sentry__logger_defaultlogger(
 
 const char *sentry__logger_describe(sentry_level_t level);
 
-void sentry__logger_log(sentry_level_t level, const char *message, ...);
+C_API void sentry__logger_log(sentry_level_t level, const char *message, ...);
 
 #define SENTRY_DEBUGF(message, ...)                                            \
     sentry__logger_log(SENTRY_LEVEL_DEBUG, message, __VA_ARGS__)

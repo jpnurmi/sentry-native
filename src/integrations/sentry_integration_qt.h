@@ -1,11 +1,7 @@
 #ifndef SENTRY_INTEGRATION_QT_H_INCLUDED
 #define SENTRY_INTEGRATION_QT_H_INCLUDED
 
-#ifdef __cplusplus
-#    define C_API extern "C"
-#else
-#    define C_API
-#endif
+#include "sentry_boot.h"
 
 /**
  * This sets up the Qt integration.
