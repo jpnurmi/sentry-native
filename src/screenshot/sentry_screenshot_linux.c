@@ -5,6 +5,7 @@
 #include "sentry_xcb.h"
 
 #include <stdlib.h>
+#include <string.h>
 
 #include "../vendor/stb_image_write.h"
 
@@ -17,6 +18,8 @@ typedef struct {
     region_item_t *items;
     size_t count;
     size_t capacity;
+    xcb_rectangle_t bounds;
+    bool dirty;
 } region_t;
 
 static region_t *
@@ -33,6 +36,8 @@ region_new(void)
         free(region);
         return NULL;
     }
+    memset(&region->bounds, 0, sizeof(region->bounds));
+    region->dirty = false;
     return region;
 }
 
@@ -60,6 +65,39 @@ region_add(region_t *region, xcb_rectangle_t rect, bool value)
     region_item_t *item = &region->items[region->count++];
     item->rect = rect;
     item->value = value;
+    region->dirty = true;
+}
+
+static void
+region_update_bounds(region_t *region)
+{
+    int16_t min_x = INT16_MAX;
+    int16_t min_y = INT16_MAX;
+    int16_t max_x = INT16_MIN;
+    int16_t max_y = INT16_MIN;
+
+    for (size_t i = 0; i < region->count; i++) {
+        region_item_t *item = &region->items[i];
+        if (item->value) {
+            min_x = MIN(min_x, item->rect.x);
+            min_y = MIN(min_y, item->rect.y);
+            max_x = MAX(max_x, item->rect.x + item->rect.width);
+            max_y = MAX(max_y, item->rect.y + item->rect.height);
+        }
+    }
+
+    if (min_x < max_x && min_y < max_y) {
+        region->bounds.x = min_x;
+        region->bounds.y = min_y;
+        region->bounds.width = max_x - min_x;
+        region->bounds.height = max_y - min_y;
+    } else {
+        region->bounds.x = 0;
+        region->bounds.y = 0;
+        region->bounds.width = 0;
+        region->bounds.height = 0;
+    }
+    region->dirty = false;
 }
 
 static bool
@@ -69,38 +107,18 @@ region_get_bounds(region_t *region, xcb_rectangle_t *bounds)
         return false;
     }
 
-    bool rv = false;
-    int16_t min_x = INT16_MAX;
-    int16_t min_y = INT16_MAX;
-    int16_t max_x = INT16_MIN;
-    int16_t max_y = INT16_MIN;
-
-    for (size_t i = 0; i < region->count; i++) {
-        region_item_t *item = &region->items[i];
-        if (!item->value) {
-            continue;
-        }
-
-        rv = true;
-        min_x = MIN(min_x, item->rect.x);
-        min_y = MIN(min_y, item->rect.y);
-        max_x = MAX(max_x, item->rect.x + item->rect.width);
-        max_y = MAX(max_y, item->rect.y + item->rect.height);
+    if (region->dirty) {
+        region_update_bounds(region);
     }
 
-    if (rv) {
-        bounds->x = min_x;
-        bounds->y = min_y;
-        bounds->width = max_x - min_x;
-        bounds->height = max_y - min_y;
-    }
-    return rv;
+    *bounds = region->bounds;
+    return true;
 }
 
 static bool
 region_contains(region_t *region, int16_t x, int16_t y)
 {
-    if (!region) {
+    if (!region || region->count == 0) {
         return false;
     }
 
