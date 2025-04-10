@@ -148,7 +148,7 @@ save_image(const uint8_t *data, uint16_t width, uint16_t height,
 }
 
 static bool
-capture_region(xcb_connection_t *connection, xcb_window_t window,
+capture_screenshot(xcb_connection_t *connection, xcb_window_t window,
     region_t *region, const sentry_path_t *path)
 {
     xcb_rectangle_t bounds;
@@ -229,7 +229,7 @@ sentry__screenshot_capture(const sentry_path_t *path)
     if (root) {
         region_t *region = region_new();
         sentry_xcb_foreach_child(connection, root, add_region, region);
-        rv = capture_region(connection, root, region, path);
+        rv = capture_screenshot(connection, root, region, path);
         region_free(region);
     }
 
