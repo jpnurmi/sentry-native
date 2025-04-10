@@ -1,9 +1,9 @@
 #include "sentry_screenshot.h"
+#include "sentry_xcb.h"
 
 #include "sentry_logger.h"
 #include "sentry_path.h"
 
-#include <dlfcn.h>
 #include <stdlib.h>
 #include <string.h>
 #include <xcb/xcb.h>
@@ -116,109 +116,6 @@ region_contains(region_t *region, int16_t x, int16_t y)
     }
 
     return false;
-}
-
-// Define function pointers for all xcb functions used in this file
-static void *libxcb_handle = NULL;
-static xcb_connection_t *(*p_xcb_connect)(const char *, int *);
-static int (*p_xcb_connection_has_error)(xcb_connection_t *);
-static const xcb_setup_t *(*p_xcb_get_setup)(xcb_connection_t *);
-static xcb_screen_iterator_t (*p_xcb_setup_roots_iterator)(const xcb_setup_t *);
-static xcb_query_tree_cookie_t (*p_xcb_query_tree)(
-    xcb_connection_t *, xcb_window_t);
-static xcb_query_tree_reply_t *(*p_xcb_query_tree_reply)(
-    xcb_connection_t *, xcb_query_tree_cookie_t, xcb_generic_error_t **);
-static xcb_window_t *(*p_xcb_query_tree_children)(
-    const xcb_query_tree_reply_t *);
-static int (*p_xcb_query_tree_children_length)(const xcb_query_tree_reply_t *);
-static xcb_get_window_attributes_cookie_t (*p_xcb_get_window_attributes)(
-    xcb_connection_t *, xcb_window_t);
-static xcb_get_window_attributes_reply_t *(*p_xcb_get_window_attributes_reply)(
-    xcb_connection_t *, xcb_get_window_attributes_cookie_t,
-    xcb_generic_error_t **);
-static xcb_get_geometry_cookie_t (*p_xcb_get_geometry)(
-    xcb_connection_t *, xcb_drawable_t);
-static xcb_get_geometry_reply_t *(*p_xcb_get_geometry_reply)(
-    xcb_connection_t *, xcb_get_geometry_cookie_t, xcb_generic_error_t **);
-static xcb_translate_coordinates_cookie_t (*p_xcb_translate_coordinates)(
-    xcb_connection_t *, xcb_window_t, xcb_window_t, int16_t, int16_t);
-static xcb_translate_coordinates_reply_t *(*p_xcb_translate_coordinates_reply)(
-    xcb_connection_t *, xcb_translate_coordinates_cookie_t,
-    xcb_generic_error_t **);
-static xcb_get_property_cookie_t (*p_xcb_get_property)(xcb_connection_t *,
-    uint8_t, xcb_window_t, xcb_atom_t, xcb_atom_t, uint32_t, uint32_t);
-static xcb_get_property_reply_t *(*p_xcb_get_property_reply)(
-    xcb_connection_t *, xcb_get_property_cookie_t, xcb_generic_error_t **);
-static uint8_t *(*p_xcb_get_property_value)(const xcb_get_property_reply_t *);
-static int (*p_xcb_get_property_value_length)(const xcb_get_property_reply_t *);
-static void (*p_xcb_disconnect)(xcb_connection_t *);
-static xcb_intern_atom_cookie_t (*p_xcb_intern_atom)(
-    xcb_connection_t *, uint8_t, uint16_t, const char *);
-static xcb_intern_atom_reply_t *(*p_xcb_intern_atom_reply)(
-    xcb_connection_t *, xcb_intern_atom_cookie_t, xcb_generic_error_t **);
-static xcb_get_image_cookie_t (*p_xcb_get_image)(xcb_connection_t *, uint8_t,
-    xcb_drawable_t, int16_t, int16_t, uint16_t, uint16_t, uint32_t);
-static xcb_get_image_reply_t *(*p_xcb_get_image_reply)(
-    xcb_connection_t *, xcb_get_image_cookie_t, xcb_generic_error_t **);
-static uint8_t *(*p_xcb_get_image_data)(const xcb_get_image_reply_t *);
-
-// Function to load libxcb and resolve symbols
-static bool
-load_xcb_symbols(void)
-{
-    libxcb_handle = dlopen("libxcb.so", RTLD_LAZY);
-    if (!libxcb_handle) {
-        SENTRY_WARN("Failed to load libxcb.so");
-        return false;
-    }
-
-#define LOAD_SYMBOL(handle, sym)                                               \
-    do {                                                                       \
-        p_##sym = dlsym(handle, #sym);                                         \
-        if (!p_##sym) {                                                        \
-            SENTRY_WARN("Failed to load symbol: " #sym);                       \
-            return false;                                                      \
-        }                                                                      \
-    } while (0)
-
-    LOAD_SYMBOL(libxcb_handle, xcb_connect);
-    LOAD_SYMBOL(libxcb_handle, xcb_connection_has_error);
-    LOAD_SYMBOL(libxcb_handle, xcb_get_setup);
-    LOAD_SYMBOL(libxcb_handle, xcb_setup_roots_iterator);
-    LOAD_SYMBOL(libxcb_handle, xcb_query_tree);
-    LOAD_SYMBOL(libxcb_handle, xcb_query_tree_reply);
-    LOAD_SYMBOL(libxcb_handle, xcb_query_tree_children);
-    LOAD_SYMBOL(libxcb_handle, xcb_query_tree_children_length);
-    LOAD_SYMBOL(libxcb_handle, xcb_get_window_attributes);
-    LOAD_SYMBOL(libxcb_handle, xcb_get_window_attributes_reply);
-    LOAD_SYMBOL(libxcb_handle, xcb_get_geometry);
-    LOAD_SYMBOL(libxcb_handle, xcb_get_geometry_reply);
-    LOAD_SYMBOL(libxcb_handle, xcb_translate_coordinates);
-    LOAD_SYMBOL(libxcb_handle, xcb_translate_coordinates_reply);
-    LOAD_SYMBOL(libxcb_handle, xcb_get_property);
-    LOAD_SYMBOL(libxcb_handle, xcb_get_property_reply);
-    LOAD_SYMBOL(libxcb_handle, xcb_get_property_value);
-    LOAD_SYMBOL(libxcb_handle, xcb_get_property_value_length);
-    LOAD_SYMBOL(libxcb_handle, xcb_disconnect);
-    LOAD_SYMBOL(libxcb_handle, xcb_intern_atom);
-    LOAD_SYMBOL(libxcb_handle, xcb_intern_atom_reply);
-    LOAD_SYMBOL(libxcb_handle, xcb_get_image);
-    LOAD_SYMBOL(libxcb_handle, xcb_get_image_reply);
-    LOAD_SYMBOL(libxcb_handle, xcb_get_image_data);
-
-#undef LOAD_SYMBOL
-
-    return true;
-}
-
-// Function to unload libxcb
-static void
-unload_xcb_symbols(void)
-{
-    if (libxcb_handle) {
-        dlclose(libxcb_handle);
-        libxcb_handle = NULL;
-    }
 }
 
 static xcb_atom_t
@@ -465,14 +362,14 @@ calculate_region(xcb_connection_t *connection, xcb_screen_t *screen, pid_t pid)
 bool
 sentry__screenshot_capture(const sentry_path_t *path)
 {
-    if (!load_xcb_symbols()) {
+    if (!sentry_xcb_load_symbols()) {
         return false;
     }
 
     xcb_connection_t *connection = p_xcb_connect(NULL, NULL);
     if (p_xcb_connection_has_error(connection)) {
         SENTRY_WARN("xcb_connect failed");
-        unload_xcb_symbols();
+        sentry_xcb_unload_symbols();
         return false;
     }
 
@@ -481,7 +378,7 @@ sentry__screenshot_capture(const sentry_path_t *path)
     if (!screen) {
         SENTRY_WARN("xcb_get_setup failed");
         p_xcb_disconnect(connection);
-        unload_xcb_symbols();
+        sentry_xcb_unload_symbols();
         return false;
     }
 
@@ -490,6 +387,6 @@ sentry__screenshot_capture(const sentry_path_t *path)
     region_free(region);
 
     p_xcb_disconnect(connection);
-    unload_xcb_symbols();
+    sentry_xcb_unload_symbols();
     return rv;
 }
