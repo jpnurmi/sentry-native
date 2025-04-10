@@ -8,45 +8,79 @@
 
 static void *libxcb_handle = NULL;
 
-xcb_connection_t *(*p_xcb_connect)(const char *, int *);
-int (*p_xcb_connection_has_error)(xcb_connection_t *);
-const xcb_setup_t *(*p_xcb_get_setup)(xcb_connection_t *);
-xcb_screen_iterator_t (*p_xcb_setup_roots_iterator)(const xcb_setup_t *);
-xcb_query_tree_cookie_t (*p_xcb_query_tree)(xcb_connection_t *, xcb_window_t);
-xcb_query_tree_reply_t *(*p_xcb_query_tree_reply)(
-    xcb_connection_t *, xcb_query_tree_cookie_t, xcb_generic_error_t **);
-xcb_window_t *(*p_xcb_query_tree_children)(const xcb_query_tree_reply_t *);
-int (*p_xcb_query_tree_children_length)(const xcb_query_tree_reply_t *);
-xcb_get_window_attributes_cookie_t (*p_xcb_get_window_attributes)(
+typedef xcb_connection_t *(*xcb_connect_func_t)(const char *, int *);
+typedef void (*xcb_disconnect_func_t)(xcb_connection_t *);
+typedef int (*xcb_connection_has_error_func_t)(xcb_connection_t *);
+typedef const xcb_setup_t *(*xcb_get_setup_func_t)(xcb_connection_t *);
+typedef xcb_screen_iterator_t (*xcb_setup_roots_iterator_func_t)(
+    const xcb_setup_t *);
+typedef xcb_query_tree_cookie_t (*xcb_query_tree_func_t)(
     xcb_connection_t *, xcb_window_t);
-xcb_get_window_attributes_reply_t *(*p_xcb_get_window_attributes_reply)(
-    xcb_connection_t *, xcb_get_window_attributes_cookie_t,
-    xcb_generic_error_t **);
-xcb_get_geometry_cookie_t (*p_xcb_get_geometry)(
+typedef xcb_query_tree_reply_t *(*xcb_query_tree_reply_func_t)(
+    xcb_connection_t *, xcb_query_tree_cookie_t, xcb_generic_error_t **);
+typedef xcb_window_t *(*xcb_query_tree_children_func_t)(
+    const xcb_query_tree_reply_t *);
+typedef int (*xcb_query_tree_children_length_func_t)(
+    const xcb_query_tree_reply_t *);
+typedef xcb_get_window_attributes_cookie_t (*xcb_get_window_attributes_func_t)(
+    xcb_connection_t *, xcb_window_t);
+typedef xcb_get_window_attributes_reply_t *(
+    *xcb_get_window_attributes_reply_func_t)(xcb_connection_t *,
+    xcb_get_window_attributes_cookie_t, xcb_generic_error_t **);
+typedef xcb_get_geometry_cookie_t (*xcb_get_geometry_func_t)(
     xcb_connection_t *, xcb_drawable_t);
-xcb_get_geometry_reply_t *(*p_xcb_get_geometry_reply)(
+typedef xcb_get_geometry_reply_t *(*xcb_get_geometry_reply_func_t)(
     xcb_connection_t *, xcb_get_geometry_cookie_t, xcb_generic_error_t **);
-xcb_translate_coordinates_cookie_t (*p_xcb_translate_coordinates)(
+typedef xcb_translate_coordinates_cookie_t (*xcb_translate_coordinates_func_t)(
     xcb_connection_t *, xcb_window_t, xcb_window_t, int16_t, int16_t);
-xcb_translate_coordinates_reply_t *(*p_xcb_translate_coordinates_reply)(
-    xcb_connection_t *, xcb_translate_coordinates_cookie_t,
-    xcb_generic_error_t **);
-xcb_get_property_cookie_t (*p_xcb_get_property)(xcb_connection_t *, uint8_t,
-    xcb_window_t, xcb_atom_t, xcb_atom_t, uint32_t, uint32_t);
-xcb_get_property_reply_t *(*p_xcb_get_property_reply)(
+typedef xcb_translate_coordinates_reply_t *(
+    *xcb_translate_coordinates_reply_func_t)(xcb_connection_t *,
+    xcb_translate_coordinates_cookie_t, xcb_generic_error_t **);
+typedef xcb_get_property_cookie_t (*xcb_get_property_func_t)(xcb_connection_t *,
+    uint8_t, xcb_window_t, xcb_atom_t, xcb_atom_t, uint32_t, uint32_t);
+typedef xcb_get_property_reply_t *(*xcb_get_property_reply_func_t)(
     xcb_connection_t *, xcb_get_property_cookie_t, xcb_generic_error_t **);
-uint8_t *(*p_xcb_get_property_value)(const xcb_get_property_reply_t *);
-int (*p_xcb_get_property_value_length)(const xcb_get_property_reply_t *);
-void (*p_xcb_disconnect)(xcb_connection_t *);
-xcb_intern_atom_cookie_t (*p_xcb_intern_atom)(
+typedef uint8_t *(*xcb_get_property_value_func_t)(
+    const xcb_get_property_reply_t *);
+typedef int (*xcb_get_property_value_length_func_t)(
+    const xcb_get_property_reply_t *);
+typedef xcb_intern_atom_cookie_t (*xcb_intern_atom_func_t)(
     xcb_connection_t *, uint8_t, uint16_t, const char *);
-xcb_intern_atom_reply_t *(*p_xcb_intern_atom_reply)(
+typedef xcb_intern_atom_reply_t *(*xcb_intern_atom_reply_func_t)(
     xcb_connection_t *, xcb_intern_atom_cookie_t, xcb_generic_error_t **);
-xcb_get_image_cookie_t (*p_xcb_get_image)(xcb_connection_t *, uint8_t,
-    xcb_drawable_t, int16_t, int16_t, uint16_t, uint16_t, uint32_t);
-xcb_get_image_reply_t *(*p_xcb_get_image_reply)(
+typedef xcb_get_image_cookie_t (*xcb_get_image_func_t)(xcb_connection_t *,
+    uint8_t, xcb_drawable_t, int16_t, int16_t, uint16_t, uint16_t, uint32_t);
+typedef xcb_get_image_reply_t *(*xcb_get_image_reply_func_t)(
     xcb_connection_t *, xcb_get_image_cookie_t, xcb_generic_error_t **);
-uint8_t *(*p_xcb_get_image_data)(const xcb_get_image_reply_t *);
+typedef uint8_t *(*xcb_get_image_data_func_t)(const xcb_get_image_reply_t *);
+
+static xcb_connect_func_t xcb_connect_func;
+static xcb_disconnect_func_t xcb_disconnect_func;
+static xcb_connection_has_error_func_t xcb_connection_has_error_func;
+static xcb_get_setup_func_t xcb_get_setup_func;
+static xcb_setup_roots_iterator_func_t xcb_setup_roots_iterator_func;
+static xcb_query_tree_func_t xcb_query_tree_func;
+static xcb_query_tree_reply_func_t xcb_query_tree_reply_func;
+static xcb_query_tree_children_func_t xcb_query_tree_children_func;
+static xcb_query_tree_children_length_func_t
+    xcb_query_tree_children_length_func;
+static xcb_get_window_attributes_func_t xcb_get_window_attributes_func;
+static xcb_get_window_attributes_reply_func_t
+    xcb_get_window_attributes_reply_func;
+static xcb_get_geometry_func_t xcb_get_geometry_func;
+static xcb_get_geometry_reply_func_t xcb_get_geometry_reply_func;
+static xcb_translate_coordinates_func_t xcb_translate_coordinates_func;
+static xcb_translate_coordinates_reply_func_t
+    xcb_translate_coordinates_reply_func;
+static xcb_get_property_func_t xcb_get_property_func;
+static xcb_get_property_reply_func_t xcb_get_property_reply_func;
+static xcb_get_property_value_func_t xcb_get_property_value_func;
+static xcb_get_property_value_length_func_t xcb_get_property_value_length_func;
+static xcb_intern_atom_func_t xcb_intern_atom_func;
+static xcb_intern_atom_reply_func_t xcb_intern_atom_reply_func;
+static xcb_get_image_func_t xcb_get_image_func;
+static xcb_get_image_reply_func_t xcb_get_image_reply_func;
+static xcb_get_image_data_func_t xcb_get_image_data_func;
 
 bool
 load_libxcb(void)
@@ -57,41 +91,41 @@ load_libxcb(void)
         return false;
     }
 
-#define LOAD_SYMBOL(handle, sym)                                               \
+#define RESOLVE_SYMBOL(sym)                                                    \
     do {                                                                       \
-        p_##sym = dlsym(handle, #sym);                                         \
-        if (!p_##sym) {                                                        \
+        sym##_func = (sym##_func_t)dlsym(libxcb_handle, #sym);                 \
+        if (!sym##_func) {                                                     \
             SENTRY_WARN("Failed to load symbol: " #sym);                       \
             return false;                                                      \
         }                                                                      \
     } while (0)
 
-    LOAD_SYMBOL(libxcb_handle, xcb_connect);
-    LOAD_SYMBOL(libxcb_handle, xcb_connection_has_error);
-    LOAD_SYMBOL(libxcb_handle, xcb_get_setup);
-    LOAD_SYMBOL(libxcb_handle, xcb_setup_roots_iterator);
-    LOAD_SYMBOL(libxcb_handle, xcb_query_tree);
-    LOAD_SYMBOL(libxcb_handle, xcb_query_tree_reply);
-    LOAD_SYMBOL(libxcb_handle, xcb_query_tree_children);
-    LOAD_SYMBOL(libxcb_handle, xcb_query_tree_children_length);
-    LOAD_SYMBOL(libxcb_handle, xcb_get_window_attributes);
-    LOAD_SYMBOL(libxcb_handle, xcb_get_window_attributes_reply);
-    LOAD_SYMBOL(libxcb_handle, xcb_get_geometry);
-    LOAD_SYMBOL(libxcb_handle, xcb_get_geometry_reply);
-    LOAD_SYMBOL(libxcb_handle, xcb_translate_coordinates);
-    LOAD_SYMBOL(libxcb_handle, xcb_translate_coordinates_reply);
-    LOAD_SYMBOL(libxcb_handle, xcb_get_property);
-    LOAD_SYMBOL(libxcb_handle, xcb_get_property_reply);
-    LOAD_SYMBOL(libxcb_handle, xcb_get_property_value);
-    LOAD_SYMBOL(libxcb_handle, xcb_get_property_value_length);
-    LOAD_SYMBOL(libxcb_handle, xcb_disconnect);
-    LOAD_SYMBOL(libxcb_handle, xcb_intern_atom);
-    LOAD_SYMBOL(libxcb_handle, xcb_intern_atom_reply);
-    LOAD_SYMBOL(libxcb_handle, xcb_get_image);
-    LOAD_SYMBOL(libxcb_handle, xcb_get_image_reply);
-    LOAD_SYMBOL(libxcb_handle, xcb_get_image_data);
+    RESOLVE_SYMBOL(xcb_connect);
+    RESOLVE_SYMBOL(xcb_connection_has_error);
+    RESOLVE_SYMBOL(xcb_disconnect);
+    RESOLVE_SYMBOL(xcb_get_setup);
+    RESOLVE_SYMBOL(xcb_setup_roots_iterator);
+    RESOLVE_SYMBOL(xcb_query_tree);
+    RESOLVE_SYMBOL(xcb_query_tree_reply);
+    RESOLVE_SYMBOL(xcb_query_tree_children);
+    RESOLVE_SYMBOL(xcb_query_tree_children_length);
+    RESOLVE_SYMBOL(xcb_get_window_attributes);
+    RESOLVE_SYMBOL(xcb_get_window_attributes_reply);
+    RESOLVE_SYMBOL(xcb_get_geometry);
+    RESOLVE_SYMBOL(xcb_get_geometry_reply);
+    RESOLVE_SYMBOL(xcb_translate_coordinates);
+    RESOLVE_SYMBOL(xcb_translate_coordinates_reply);
+    RESOLVE_SYMBOL(xcb_get_property);
+    RESOLVE_SYMBOL(xcb_get_property_reply);
+    RESOLVE_SYMBOL(xcb_get_property_value);
+    RESOLVE_SYMBOL(xcb_get_property_value_length);
+    RESOLVE_SYMBOL(xcb_intern_atom);
+    RESOLVE_SYMBOL(xcb_intern_atom_reply);
+    RESOLVE_SYMBOL(xcb_get_image);
+    RESOLVE_SYMBOL(xcb_get_image_reply);
+    RESOLVE_SYMBOL(xcb_get_image_data);
 
-#undef LOAD_SYMBOL
+#undef RESOLVE_SYMBOL
 
     return true;
 }
@@ -112,8 +146,8 @@ sentry_xcb_connect(void)
         return NULL;
     }
 
-    xcb_connection_t *connection = p_xcb_connect(NULL, NULL);
-    if (p_xcb_connection_has_error(connection)) {
+    xcb_connection_t *connection = xcb_connect_func(NULL, NULL);
+    if (xcb_connection_has_error_func(connection)) {
         SENTRY_WARN("xcb_connect failed");
         unload_libxcb();
         return NULL;
@@ -126,7 +160,7 @@ void
 sentry_xcb_disconnect(xcb_connection_t *connection)
 {
     if (libxcb_handle) {
-        p_xcb_disconnect(connection);
+        xcb_disconnect_func(connection);
         unload_libxcb();
     }
 }
@@ -134,8 +168,8 @@ sentry_xcb_disconnect(xcb_connection_t *connection)
 xcb_window_t
 sentry_xcb_get_root(xcb_connection_t *connection)
 {
-    const xcb_setup_t *setup = p_xcb_get_setup(connection);
-    xcb_screen_t *screen = p_xcb_setup_roots_iterator(setup).data;
+    const xcb_setup_t *setup = xcb_get_setup_func(connection);
+    xcb_screen_t *screen = xcb_setup_roots_iterator_func(setup).data;
     if (!screen) {
         SENTRY_WARN("xcb_get_setup failed");
         return XCB_WINDOW_NONE;
@@ -147,9 +181,9 @@ static xcb_atom_t
 get_atom(xcb_connection_t *connection, const char *name)
 {
     xcb_intern_atom_cookie_t atom_cookie
-        = p_xcb_intern_atom(connection, 0, strlen(name), name);
+        = xcb_intern_atom_func(connection, 0, strlen(name), name);
     xcb_intern_atom_reply_t *atom_reply
-        = p_xcb_intern_atom_reply(connection, atom_cookie, NULL);
+        = xcb_intern_atom_reply_func(connection, atom_cookie, NULL);
     if (!atom_reply) {
         return XCB_ATOM_NONE;
     }
@@ -163,9 +197,9 @@ bool
 sentry_xcb_is_visible(xcb_connection_t *connection, xcb_window_t window)
 {
     xcb_get_window_attributes_cookie_t attributes_cookie
-        = p_xcb_get_window_attributes(connection, window);
+        = xcb_get_window_attributes_func(connection, window);
     xcb_get_window_attributes_reply_t *attributes_reply
-        = p_xcb_get_window_attributes_reply(
+        = xcb_get_window_attributes_reply_func(
             connection, attributes_cookie, NULL);
     if (!attributes_reply) {
         return false;
@@ -184,17 +218,17 @@ sentry_xcb_get_pid(xcb_connection_t *connection, xcb_window_t window)
         pid_atom = get_atom(connection, "_NET_WM_PID");
     }
 
-    xcb_get_property_cookie_t property_cookie = p_xcb_get_property(
+    xcb_get_property_cookie_t property_cookie = xcb_get_property_func(
         connection, 0, window, pid_atom, XCB_ATOM_CARDINAL, 0, 1);
     xcb_get_property_reply_t *property_reply
-        = p_xcb_get_property_reply(connection, property_cookie, NULL);
+        = xcb_get_property_reply_func(connection, property_cookie, NULL);
     if (!property_reply
-        || p_xcb_get_property_value_length(property_reply) == 0) {
+        || xcb_get_property_value_length_func(property_reply) == 0) {
         free(property_reply);
         return -1;
     }
 
-    pid_t pid = *(pid_t *)p_xcb_get_property_value(property_reply);
+    pid_t pid = *(pid_t *)xcb_get_property_value_func(property_reply);
     free(property_reply);
     return pid;
 }
@@ -203,17 +237,17 @@ static bool
 adjust_frame_extents(xcb_connection_t *connection, xcb_window_t window,
     xcb_atom_t atom, xcb_rectangle_t *rect)
 {
-    xcb_get_property_cookie_t property_cookie = p_xcb_get_property(
+    xcb_get_property_cookie_t property_cookie = xcb_get_property_func(
         connection, 0, window, atom, XCB_ATOM_CARDINAL, 0, 4);
     xcb_get_property_reply_t *property_reply
-        = p_xcb_get_property_reply(connection, property_cookie, NULL);
+        = xcb_get_property_reply_func(connection, property_cookie, NULL);
     if (!property_reply
-        || p_xcb_get_property_value_length(property_reply) == 0) {
+        || xcb_get_property_value_length_func(property_reply) == 0) {
         free(property_reply);
         return false;
     }
 
-    int32_t *extents = (int32_t *)p_xcb_get_property_value(property_reply);
+    int32_t *extents = (int32_t *)xcb_get_property_value_func(property_reply);
     rect->x += extents[0];
     rect->y += extents[2];
     rect->width -= extents[0] + extents[1];
@@ -228,19 +262,20 @@ sentry_xcb_get_geometry(
     xcb_connection_t *connection, xcb_window_t window, xcb_rectangle_t *rect)
 {
     xcb_get_geometry_cookie_t geometry_cookie
-        = p_xcb_get_geometry(connection, window);
+        = xcb_get_geometry_func(connection, window);
     xcb_get_geometry_reply_t *geometry_reply
-        = p_xcb_get_geometry_reply(connection, geometry_cookie, NULL);
+        = xcb_get_geometry_reply_func(connection, geometry_cookie, NULL);
     if (!geometry_reply) {
         SENTRY_WARN("xcb_get_geometry failed");
         return false;
     }
 
     xcb_translate_coordinates_cookie_t translate_cookie
-        = p_xcb_translate_coordinates(
+        = xcb_translate_coordinates_func(
             connection, window, geometry_reply->root, 0, 0);
     xcb_translate_coordinates_reply_t *translate_reply
-        = p_xcb_translate_coordinates_reply(connection, translate_cookie, NULL);
+        = xcb_translate_coordinates_reply_func(
+            connection, translate_cookie, NULL);
     if (!translate_reply) {
         SENTRY_WARN("xcb_translate_coordinates failed");
         free(geometry_reply);
@@ -273,16 +308,17 @@ int
 sentry_xcb_foreach_child(xcb_connection_t *connection, xcb_window_t window,
     bool (*callback)(xcb_connection_t *, xcb_window_t, void *), void *data)
 {
-    xcb_query_tree_cookie_t tree_cookie = p_xcb_query_tree(connection, window);
+    xcb_query_tree_cookie_t tree_cookie
+        = xcb_query_tree_func(connection, window);
     xcb_query_tree_reply_t *tree_reply
-        = p_xcb_query_tree_reply(connection, tree_cookie, NULL);
+        = xcb_query_tree_reply_func(connection, tree_cookie, NULL);
     if (!tree_reply) {
         return -1;
     }
 
     int rv = 0;
-    xcb_window_t *children = p_xcb_query_tree_children(tree_reply);
-    int len = p_xcb_query_tree_children_length(tree_reply);
+    xcb_window_t *children = xcb_query_tree_children_func(tree_reply);
+    int len = xcb_query_tree_children_length_func(tree_reply);
 
     for (int i = 0; i < len; i++) {
         if (callback(connection, children[i], data)) {
@@ -298,16 +334,16 @@ uint8_t *
 sentry_xcb_get_image(xcb_connection_t *connection, xcb_window_t window,
     int16_t x, int16_t y, uint16_t width, uint16_t height)
 {
-    xcb_get_image_cookie_t image_cookie = p_xcb_get_image(
+    xcb_get_image_cookie_t image_cookie = xcb_get_image_func(
         connection, XCB_IMAGE_FORMAT_Z_PIXMAP, window, x, y, width, height, ~0);
     xcb_get_image_reply_t *image_reply
-        = p_xcb_get_image_reply(connection, image_cookie, NULL);
+        = xcb_get_image_reply_func(connection, image_cookie, NULL);
     if (!image_reply) {
         SENTRY_WARN("xcb_get_image failed");
         return NULL;
     }
 
-    return p_xcb_get_image_data(image_reply);
+    return xcb_get_image_data_func(image_reply);
 }
 
 void
