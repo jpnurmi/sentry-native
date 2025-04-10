@@ -53,6 +53,16 @@ static xcb_get_image_reply_t *(*xcb_get_image_reply_func)(
     xcb_connection_t *, xcb_get_image_cookie_t, xcb_generic_error_t **);
 static uint8_t *(*xcb_get_image_data_func)(const xcb_get_image_reply_t *);
 
+#define SENTRY_XCB_ERROR(func, error)                                          \
+    do {                                                                       \
+        if (error) {                                                           \
+            SENTRY_WARNF("%s failed: %s", #func, error->error_code);           \
+            free(error);                                                       \
+        } else {                                                               \
+            SENTRY_WARNF("%s failed", #func);                                  \
+        }                                                                      \
+    } while (0)
+
 static bool
 load_libxcb(void)
 {
@@ -119,7 +129,6 @@ sentry_xcb_connect(void)
 
     xcb_connection_t *connection = xcb_connect_func(NULL, NULL);
     if (xcb_connection_has_error_func(connection)) {
-        SENTRY_WARN("xcb_connect failed");
         unload_libxcb();
         return NULL;
     }
@@ -142,7 +151,6 @@ sentry_xcb_get_root(xcb_connection_t *connection)
     const xcb_setup_t *setup = xcb_get_setup_func(connection);
     xcb_screen_t *screen = xcb_setup_roots_iterator_func(setup).data;
     if (!screen) {
-        SENTRY_WARN("xcb_get_setup failed");
         return XCB_WINDOW_NONE;
     }
     return screen->root;
@@ -234,21 +242,23 @@ sentry_xcb_get_geometry(
 {
     xcb_get_geometry_cookie_t geometry_cookie
         = xcb_get_geometry_func(connection, window);
-    xcb_get_geometry_reply_t *geometry_reply
-        = xcb_get_geometry_reply_func(connection, geometry_cookie, NULL);
+    xcb_generic_error_t *geometry_error = NULL;
+    xcb_get_geometry_reply_t *geometry_reply = xcb_get_geometry_reply_func(
+        connection, geometry_cookie, &geometry_error);
     if (!geometry_reply) {
-        SENTRY_WARN("xcb_get_geometry failed");
+        SENTRY_XCB_ERROR(xcb_get_geometry, geometry_error);
         return false;
     }
 
     xcb_translate_coordinates_cookie_t translate_cookie
         = xcb_translate_coordinates_func(
             connection, window, geometry_reply->root, 0, 0);
+    xcb_generic_error_t *translate_error = NULL;
     xcb_translate_coordinates_reply_t *translate_reply
         = xcb_translate_coordinates_reply_func(
-            connection, translate_cookie, NULL);
+            connection, translate_cookie, &translate_error);
     if (!translate_reply) {
-        SENTRY_WARN("xcb_translate_coordinates failed");
+        SENTRY_XCB_ERROR(xcb_translate_coordinates, translate_error);
         free(geometry_reply);
         return false;
     }
@@ -307,13 +317,13 @@ sentry_xcb_get_image(xcb_connection_t *connection, xcb_window_t window,
 {
     xcb_get_image_cookie_t image_cookie = xcb_get_image_func(
         connection, XCB_IMAGE_FORMAT_Z_PIXMAP, window, x, y, width, height, ~0);
+    xcb_generic_error_t *image_error = NULL;
     xcb_get_image_reply_t *image_reply
-        = xcb_get_image_reply_func(connection, image_cookie, NULL);
+        = xcb_get_image_reply_func(connection, image_cookie, &image_error);
     if (!image_reply) {
-        SENTRY_WARN("xcb_get_image failed");
+        SENTRY_XCB_ERROR(xcb_get_image, image_error);
         return NULL;
     }
-
     return xcb_get_image_data_func(image_reply);
 }
 
