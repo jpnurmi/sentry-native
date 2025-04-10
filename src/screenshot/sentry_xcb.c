@@ -1,6 +1,10 @@
 #include "sentry_xcb.h"
+
 #include "sentry_logger.h"
+
 #include <dlfcn.h>
+#include <stdlib.h>
+#include <string.h>
 
 static void *libxcb_handle = NULL;
 
@@ -99,4 +103,155 @@ sentry_xcb_unload_symbols(void)
         dlclose(libxcb_handle);
         libxcb_handle = NULL;
     }
+}
+
+static xcb_atom_t
+get_atom(xcb_connection_t *connection, const char *name)
+{
+    xcb_intern_atom_cookie_t atom_cookie
+        = p_xcb_intern_atom(connection, 0, strlen(name), name);
+    xcb_intern_atom_reply_t *atom_reply
+        = p_xcb_intern_atom_reply(connection, atom_cookie, NULL);
+    if (!atom_reply) {
+        return XCB_ATOM_NONE;
+    }
+
+    xcb_atom_t atom = atom_reply->atom;
+    free(atom_reply);
+    return atom;
+}
+
+bool
+sentry_xcb_is_visible(xcb_connection_t *connection, xcb_window_t window)
+{
+    xcb_get_window_attributes_cookie_t attributes_cookie
+        = p_xcb_get_window_attributes(connection, window);
+    xcb_get_window_attributes_reply_t *attributes_reply
+        = p_xcb_get_window_attributes_reply(
+            connection, attributes_cookie, NULL);
+    if (!attributes_reply) {
+        return false;
+    }
+
+    uint8_t map_state = attributes_reply->map_state;
+    free(attributes_reply);
+    return map_state == XCB_MAP_STATE_VIEWABLE;
+}
+
+pid_t
+sentry_xcb_get_pid(xcb_connection_t *connection, xcb_window_t window)
+{
+    static xcb_atom_t pid_atom = XCB_ATOM_NONE;
+    if (pid_atom == XCB_ATOM_NONE) {
+        pid_atom = get_atom(connection, "_NET_WM_PID");
+    }
+
+    xcb_get_property_cookie_t property_cookie = p_xcb_get_property(
+        connection, 0, window, pid_atom, XCB_ATOM_CARDINAL, 0, 1);
+    xcb_get_property_reply_t *property_reply
+        = p_xcb_get_property_reply(connection, property_cookie, NULL);
+    if (!property_reply
+        || p_xcb_get_property_value_length(property_reply) == 0) {
+        free(property_reply);
+        return -1;
+    }
+
+    pid_t pid = *(pid_t *)p_xcb_get_property_value(property_reply);
+    free(property_reply);
+    return pid;
+}
+
+static bool
+adjust_frame_extents(xcb_connection_t *connection, xcb_window_t window,
+    xcb_atom_t atom, xcb_rectangle_t *rect)
+{
+    xcb_get_property_cookie_t property_cookie = p_xcb_get_property(
+        connection, 0, window, atom, XCB_ATOM_CARDINAL, 0, 4);
+    xcb_get_property_reply_t *property_reply
+        = p_xcb_get_property_reply(connection, property_cookie, NULL);
+    if (!property_reply
+        || p_xcb_get_property_value_length(property_reply) == 0) {
+        free(property_reply);
+        return false;
+    }
+
+    int32_t *extents = (int32_t *)p_xcb_get_property_value(property_reply);
+    rect->x += extents[0];
+    rect->y += extents[2];
+    rect->width -= extents[0] + extents[1];
+    rect->height -= extents[2] + extents[3];
+
+    free(property_reply);
+    return true;
+}
+
+bool
+sentry_xcb_get_geometry(
+    xcb_connection_t *connection, xcb_window_t window, xcb_rectangle_t *rect)
+{
+    xcb_get_geometry_cookie_t geometry_cookie
+        = p_xcb_get_geometry(connection, window);
+    xcb_get_geometry_reply_t *geometry_reply
+        = p_xcb_get_geometry_reply(connection, geometry_cookie, NULL);
+    if (!geometry_reply) {
+        SENTRY_WARN("xcb_get_geometry failed");
+        return false;
+    }
+
+    xcb_translate_coordinates_cookie_t translate_cookie
+        = p_xcb_translate_coordinates(
+            connection, window, geometry_reply->root, 0, 0);
+    xcb_translate_coordinates_reply_t *translate_reply
+        = p_xcb_translate_coordinates_reply(connection, translate_cookie, NULL);
+    if (!translate_reply) {
+        SENTRY_WARN("xcb_translate_coordinates failed");
+        free(geometry_reply);
+        return false;
+    }
+
+    rect->x = translate_reply->dst_x;
+    rect->y = translate_reply->dst_y;
+    rect->width = geometry_reply->width;
+    rect->height = geometry_reply->height;
+
+    static xcb_atom_t frame_atom = XCB_ATOM_NONE;
+    if (frame_atom == XCB_ATOM_NONE) {
+        frame_atom = get_atom(connection, "_NET_FRAME_EXTENTS");
+    }
+    if (!adjust_frame_extents(connection, window, frame_atom, rect)) {
+        static xcb_atom_t gtk_frame_atom = XCB_ATOM_NONE;
+        if (gtk_frame_atom == XCB_ATOM_NONE) {
+            gtk_frame_atom = get_atom(connection, "_GTK_FRAME_EXTENTS");
+        }
+        adjust_frame_extents(connection, window, gtk_frame_atom, rect);
+    }
+
+    free(geometry_reply);
+    free(translate_reply);
+    return true;
+}
+
+int
+sentry_xcb_foreach_child(xcb_connection_t *connection, xcb_window_t window,
+    bool (*callback)(xcb_connection_t *, xcb_window_t, void *), void *data)
+{
+    xcb_query_tree_cookie_t tree_cookie = p_xcb_query_tree(connection, window);
+    xcb_query_tree_reply_t *tree_reply
+        = p_xcb_query_tree_reply(connection, tree_cookie, NULL);
+    if (!tree_reply) {
+        return -1;
+    }
+
+    int rv = 0;
+    xcb_window_t *children = p_xcb_query_tree_children(tree_reply);
+    int len = p_xcb_query_tree_children_length(tree_reply);
+
+    for (int i = 0; i < len; i++) {
+        if (callback(connection, children[i], data)) {
+            rv++;
+        }
+    }
+
+    free(tree_reply);
+    return rv;
 }

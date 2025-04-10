@@ -1,12 +1,10 @@
 #include "sentry_screenshot.h"
-#include "sentry_xcb.h"
 
 #include "sentry_logger.h"
 #include "sentry_path.h"
+#include "sentry_xcb.h"
 
 #include <stdlib.h>
-#include <string.h>
-#include <xcb/xcb.h>
 
 #include "../vendor/stb_image_write.h"
 
@@ -118,157 +116,6 @@ region_contains(region_t *region, int16_t x, int16_t y)
     return false;
 }
 
-static xcb_atom_t
-get_atom(xcb_connection_t *connection, const char *name)
-{
-    xcb_intern_atom_cookie_t atom_cookie
-        = p_xcb_intern_atom(connection, 0, strlen(name), name);
-    xcb_intern_atom_reply_t *atom_reply
-        = p_xcb_intern_atom_reply(connection, atom_cookie, NULL);
-    if (!atom_reply) {
-        return XCB_ATOM_NONE;
-    }
-    xcb_atom_t atom = atom_reply->atom;
-    free(atom_reply);
-    return atom;
-}
-
-static uint8_t
-get_window_state(xcb_connection_t *connection, xcb_window_t window)
-{
-    xcb_get_window_attributes_cookie_t attributes_cookie
-        = p_xcb_get_window_attributes(connection, window);
-    xcb_get_window_attributes_reply_t *attributes_reply
-        = p_xcb_get_window_attributes_reply(
-            connection, attributes_cookie, NULL);
-    if (!attributes_reply) {
-        return XCB_MAP_STATE_UNMAPPED;
-    }
-    uint8_t map_state = attributes_reply->map_state;
-    free(attributes_reply);
-    return map_state;
-}
-
-static pid_t
-get_window_pid(xcb_connection_t *connection, xcb_window_t window)
-{
-    static xcb_atom_t atom = XCB_ATOM_NONE;
-    if (atom == XCB_ATOM_NONE) {
-        atom = get_atom(connection, "_NET_WM_PID");
-    }
-
-    xcb_get_property_cookie_t property_cookie = p_xcb_get_property(
-        connection, 0, window, atom, XCB_ATOM_CARDINAL, 0, 1);
-    xcb_get_property_reply_t *property_reply
-        = p_xcb_get_property_reply(connection, property_cookie, NULL);
-    if (!property_reply
-        || p_xcb_get_property_value_length(property_reply) == 0) {
-        free(property_reply);
-        return -1;
-    }
-    pid_t pid = *(pid_t *)p_xcb_get_property_value(property_reply);
-    free(property_reply);
-    return pid;
-}
-
-static bool
-is_app_window(xcb_connection_t *connection, xcb_window_t window, pid_t pid)
-{
-    if (get_window_pid(connection, window) == pid) {
-        return true;
-    }
-
-    xcb_query_tree_cookie_t tree_cookie = p_xcb_query_tree(connection, window);
-    xcb_query_tree_reply_t *tree_reply
-        = p_xcb_query_tree_reply(connection, tree_cookie, NULL);
-    if (!tree_reply) {
-        return false;
-    }
-
-    xcb_window_t *children = p_xcb_query_tree_children(tree_reply);
-    int len = p_xcb_query_tree_children_length(tree_reply);
-
-    for (int i = 0; i < len; i++) {
-        xcb_window_t child = children[i];
-        if (get_window_pid(connection, child) == pid) {
-            free(tree_reply);
-            return true;
-        }
-    }
-
-    free(tree_reply);
-    return false;
-}
-
-static bool
-get_frame_extents(xcb_connection_t *connection, xcb_window_t window,
-    xcb_atom_t atom, xcb_rectangle_t *rect)
-{
-    xcb_get_property_cookie_t property_cookie = p_xcb_get_property(
-        connection, 0, window, atom, XCB_ATOM_CARDINAL, 0, 4);
-    xcb_get_property_reply_t *property_reply
-        = p_xcb_get_property_reply(connection, property_cookie, NULL);
-    if (!property_reply
-        || p_xcb_get_property_value_length(property_reply) == 0) {
-        free(property_reply);
-        return false;
-    }
-    int32_t *extents = (int32_t *)p_xcb_get_property_value(property_reply);
-    rect->x += extents[0];
-    rect->y += extents[2];
-    rect->width -= extents[0] + extents[1];
-    rect->height -= extents[2] + extents[3];
-    free(property_reply);
-    return true;
-}
-
-static bool
-get_window_geometry(
-    xcb_connection_t *connection, xcb_window_t window, xcb_rectangle_t *rect)
-{
-    xcb_get_geometry_cookie_t geometry_cookie
-        = p_xcb_get_geometry(connection, window);
-    xcb_get_geometry_reply_t *geometry_reply
-        = p_xcb_get_geometry_reply(connection, geometry_cookie, NULL);
-    if (!geometry_reply) {
-        SENTRY_WARN("xcb_get_geometry failed");
-        return false;
-    }
-
-    xcb_translate_coordinates_cookie_t translate_cookie
-        = p_xcb_translate_coordinates(
-            connection, window, geometry_reply->root, 0, 0);
-    xcb_translate_coordinates_reply_t *translate_reply
-        = p_xcb_translate_coordinates_reply(connection, translate_cookie, NULL);
-    if (!translate_reply) {
-        SENTRY_WARN("xcb_translate_coordinates failed");
-        free(geometry_reply);
-        return false;
-    }
-
-    rect->x = translate_reply->dst_x;
-    rect->y = translate_reply->dst_y;
-    rect->width = geometry_reply->width;
-    rect->height = geometry_reply->height;
-
-    static xcb_atom_t net = XCB_ATOM_NONE;
-    if (net == XCB_ATOM_NONE) {
-        net = get_atom(connection, "_NET_FRAME_EXTENTS");
-    }
-    if (!get_frame_extents(connection, window, net, rect)) {
-        static xcb_atom_t gtk = XCB_ATOM_NONE;
-        if (gtk == XCB_ATOM_NONE) {
-            gtk = get_atom(connection, "_GTK_FRAME_EXTENTS");
-        }
-        get_frame_extents(connection, window, gtk, rect);
-    }
-
-    free(geometry_reply);
-    free(translate_reply);
-
-    return true;
-}
-
 static bool
 save_image(
     const uint8_t *data, int width, int height, const sentry_path_t *path)
@@ -283,7 +130,7 @@ save_image(
 }
 
 static bool
-capture_region(xcb_connection_t *connection, xcb_screen_t *screen,
+capture_region(xcb_connection_t *connection, xcb_window_t window,
     region_t *region, const sentry_path_t *path)
 {
     xcb_rectangle_t bounds;
@@ -293,17 +140,17 @@ capture_region(xcb_connection_t *connection, xcb_screen_t *screen,
         return false;
     }
 
-    xcb_get_image_cookie_t cookie
-        = p_xcb_get_image(connection, XCB_IMAGE_FORMAT_Z_PIXMAP, screen->root,
+    xcb_get_image_cookie_t image_cookie
+        = p_xcb_get_image(connection, XCB_IMAGE_FORMAT_Z_PIXMAP, window,
             bounds.x, bounds.y, bounds.width, bounds.height, ~0);
-    xcb_get_image_reply_t *image
-        = p_xcb_get_image_reply(connection, cookie, NULL);
-    if (!image) {
+    xcb_get_image_reply_t *image_reply
+        = p_xcb_get_image_reply(connection, image_cookie, NULL);
+    if (!image_reply) {
         SENTRY_WARN("xcb_get_image failed");
         return false;
     }
 
-    uint8_t *data = p_xcb_get_image_data(image);
+    uint8_t *data = p_xcb_get_image_data(image_reply);
     for (uint16_t y = 0; y < bounds.height; y++) {
         for (uint16_t x = 0; x < bounds.width; x++) {
             int offset = (x + y * bounds.width) * 4;
@@ -323,40 +170,37 @@ capture_region(xcb_connection_t *connection, xcb_screen_t *screen,
     }
 
     bool rv = save_image(data, bounds.width, bounds.height, path);
-    free(image);
+    free(image_reply);
     return rv;
 }
 
-static region_t *
-calculate_region(xcb_connection_t *connection, xcb_screen_t *screen, pid_t pid)
+static bool
+is_app_window(xcb_connection_t *connection, xcb_window_t window, void *data)
 {
-    xcb_query_tree_cookie_t cookie = p_xcb_query_tree(connection, screen->root);
-    xcb_query_tree_reply_t *tree
-        = p_xcb_query_tree_reply(connection, cookie, NULL);
-    if (!tree) {
-        return NULL;
+    pid_t pid = *(pid_t *)data;
+    return sentry_xcb_get_pid(connection, window) == pid;
+}
+
+static bool
+add_region(xcb_connection_t *connection, xcb_window_t window, void *data)
+{
+    if (!sentry_xcb_is_visible(connection, window)) {
+        return true;
     }
 
-    region_t *region = region_new();
-    xcb_window_t *windows = p_xcb_query_tree_children(tree);
-    int len = p_xcb_query_tree_children_length(tree);
-
-    for (int i = 0; i < len; i++) {
-        xcb_window_t window = windows[i];
-        if (get_window_state(connection, window) != XCB_MAP_STATE_VIEWABLE) {
-            continue;
-        }
-
-        xcb_rectangle_t rect;
-        if (!get_window_geometry(connection, window, &rect)) {
-            continue;
-        }
-
-        region_add(region, rect, is_app_window(connection, window, pid));
+    xcb_rectangle_t rect;
+    if (!sentry_xcb_get_geometry(connection, window, &rect)) {
+        return true;
     }
 
-    free(tree);
-    return region;
+    // either top-level-window (CSD) or its child (SSD)
+    pid_t pid = getpid();
+    bool value = is_app_window(connection, window, &pid)
+        || sentry_xcb_foreach_child(connection, window, is_app_window, &pid)
+            > 0;
+
+    region_add((region_t *)data, rect, value);
+    return true;
 }
 
 bool
@@ -382,8 +226,9 @@ sentry__screenshot_capture(const sentry_path_t *path)
         return false;
     }
 
-    region_t *region = calculate_region(connection, screen, getpid());
-    bool rv = capture_region(connection, screen, region, path);
+    region_t *region = region_new();
+    sentry_xcb_foreach_child(connection, screen->root, add_region, region);
+    bool rv = capture_region(connection, screen->root, region, path);
     region_free(region);
 
     p_xcb_disconnect(connection);
