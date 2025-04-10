@@ -49,7 +49,7 @@ xcb_get_image_reply_t *(*p_xcb_get_image_reply)(
 uint8_t *(*p_xcb_get_image_data)(const xcb_get_image_reply_t *);
 
 bool
-sentry_xcb_load_symbols(void)
+load_libxcb(void)
 {
     libxcb_handle = dlopen("libxcb.so", RTLD_LAZY);
     if (!libxcb_handle) {
@@ -97,12 +97,50 @@ sentry_xcb_load_symbols(void)
 }
 
 void
-sentry_xcb_unload_symbols(void)
+unload_libxcb(void)
 {
     if (libxcb_handle) {
         dlclose(libxcb_handle);
         libxcb_handle = NULL;
     }
+}
+
+xcb_connection_t *
+sentry_xcb_connect(void)
+{
+    if (!load_libxcb()) {
+        return NULL;
+    }
+
+    xcb_connection_t *connection = p_xcb_connect(NULL, NULL);
+    if (p_xcb_connection_has_error(connection)) {
+        SENTRY_WARN("xcb_connect failed");
+        unload_libxcb();
+        return NULL;
+    }
+
+    return connection;
+}
+
+void
+sentry_xcb_disconnect(xcb_connection_t *connection)
+{
+    if (libxcb_handle) {
+        p_xcb_disconnect(connection);
+        unload_libxcb();
+    }
+}
+
+xcb_window_t
+sentry_xcb_get_root(xcb_connection_t *connection)
+{
+    const xcb_setup_t *setup = p_xcb_get_setup(connection);
+    xcb_screen_t *screen = p_xcb_setup_roots_iterator(setup).data;
+    if (!screen) {
+        SENTRY_WARN("xcb_get_setup failed");
+        return XCB_WINDOW_NONE;
+    }
+    return screen->root;
 }
 
 static xcb_atom_t
@@ -254,4 +292,27 @@ sentry_xcb_foreach_child(xcb_connection_t *connection, xcb_window_t window,
 
     free(tree_reply);
     return rv;
+}
+
+uint8_t *
+sentry_xcb_get_image(xcb_connection_t *connection, xcb_window_t window,
+    int16_t x, int16_t y, uint16_t width, uint16_t height)
+{
+    xcb_get_image_cookie_t image_cookie = p_xcb_get_image(
+        connection, XCB_IMAGE_FORMAT_Z_PIXMAP, window, x, y, width, height, ~0);
+    xcb_get_image_reply_t *image_reply
+        = p_xcb_get_image_reply(connection, image_cookie, NULL);
+    if (!image_reply) {
+        SENTRY_WARN("xcb_get_image failed");
+        return NULL;
+    }
+
+    return p_xcb_get_image_data(image_reply);
+}
+
+void
+sentry_xcb_image_free(uint8_t *image)
+{
+    xcb_get_image_reply_t *image_reply = (xcb_get_image_reply_t *)image - 1;
+    free(image_reply);
 }

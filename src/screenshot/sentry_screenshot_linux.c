@@ -135,8 +135,8 @@ region_contains(region_t *region, int16_t x, int16_t y)
 }
 
 static bool
-save_image(
-    const uint8_t *data, int width, int height, const sentry_path_t *path)
+save_image(const uint8_t *data, uint16_t width, uint16_t height,
+    const sentry_path_t *path)
 {
     bool rv = stbi_write_png(path->path, width, height, 4, data, width * 4);
     if (!rv) {
@@ -158,17 +158,12 @@ capture_region(xcb_connection_t *connection, xcb_window_t window,
         return false;
     }
 
-    xcb_get_image_cookie_t image_cookie
-        = p_xcb_get_image(connection, XCB_IMAGE_FORMAT_Z_PIXMAP, window,
-            bounds.x, bounds.y, bounds.width, bounds.height, ~0);
-    xcb_get_image_reply_t *image_reply
-        = p_xcb_get_image_reply(connection, image_cookie, NULL);
-    if (!image_reply) {
-        SENTRY_WARN("xcb_get_image failed");
+    uint8_t *data = sentry_xcb_get_image(
+        connection, window, bounds.x, bounds.y, bounds.width, bounds.height);
+    if (!data) {
         return false;
     }
 
-    uint8_t *data = p_xcb_get_image_data(image_reply);
     for (uint16_t y = 0; y < bounds.height; y++) {
         for (uint16_t x = 0; x < bounds.width; x++) {
             int offset = (x + y * bounds.width) * 4;
@@ -188,7 +183,7 @@ capture_region(xcb_connection_t *connection, xcb_window_t window,
     }
 
     bool rv = save_image(data, bounds.width, bounds.height, path);
-    free(image_reply);
+    sentry_xcb_image_free(data);
     return rv;
 }
 
@@ -224,32 +219,20 @@ add_region(xcb_connection_t *connection, xcb_window_t window, void *data)
 bool
 sentry__screenshot_capture(const sentry_path_t *path)
 {
-    if (!sentry_xcb_load_symbols()) {
+    xcb_connection_t *connection = sentry_xcb_connect();
+    if (!connection) {
         return false;
     }
 
-    xcb_connection_t *connection = p_xcb_connect(NULL, NULL);
-    if (p_xcb_connection_has_error(connection)) {
-        SENTRY_WARN("xcb_connect failed");
-        sentry_xcb_unload_symbols();
-        return false;
+    bool rv = false;
+    xcb_window_t root = sentry_xcb_get_root(connection);
+    if (root) {
+        region_t *region = region_new();
+        sentry_xcb_foreach_child(connection, root, add_region, region);
+        rv = capture_region(connection, root, region, path);
+        region_free(region);
     }
 
-    const xcb_setup_t *setup = p_xcb_get_setup(connection);
-    xcb_screen_t *screen = p_xcb_setup_roots_iterator(setup).data;
-    if (!screen) {
-        SENTRY_WARN("xcb_get_setup failed");
-        p_xcb_disconnect(connection);
-        sentry_xcb_unload_symbols();
-        return false;
-    }
-
-    region_t *region = region_new();
-    sentry_xcb_foreach_child(connection, screen->root, add_region, region);
-    bool rv = capture_region(connection, screen->root, region, path);
-    region_free(region);
-
-    p_xcb_disconnect(connection);
-    sentry_xcb_unload_symbols();
+    sentry_xcb_disconnect(connection);
     return rv;
 }
