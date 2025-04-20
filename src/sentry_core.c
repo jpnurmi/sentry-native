@@ -14,6 +14,7 @@
 #include "sentry_scope.h"
 #include "sentry_screenshot.h"
 #include "sentry_session.h"
+#include "sentry_session_replay.h"
 #include "sentry_string.h"
 #include "sentry_sync.h"
 #include "sentry_tracing.h"
@@ -192,11 +193,15 @@ sentry_init(sentry_options_t *options)
     sentry_integration_setup_qt();
 #endif
 
-#if defined(SENTRY_PLATFORM_WINDOWS)                                           \
-    && (!defined(SENTRY_BUILD_SHARED) || defined(_GAMING_XBOX_SCARLETT))
+#if defined(SENTRY_PLATFORM_WINDOWS)
+#    if !defined(SENTRY_BUILD_SHARED) || defined(_GAMING_XBOX_SCARLETT)
     // This function must be positioned so that any dependents on its cached
     // functions are invoked after it.
     sentry__init_cached_kernel32_functions();
+#    endif
+#    if !defined(_GAMING_XBOX_SCARLETT)
+    sentry__session_replay_init();
+#    endif
 #endif
 
     // after initializing the transport, we will submit all the unsent envelopes

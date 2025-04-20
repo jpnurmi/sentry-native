@@ -62,6 +62,8 @@ if(WIN32)
 		sentry_windows_dbghelp.h
 		path/sentry_path_windows.c
 		symbolizer/sentry_symbolizer_windows.c
+		sentry_session_replay.c
+		sentry_session_replay.h
 	)
 elseif(NX)
 	sentry_target_sources_cwd(sentry
