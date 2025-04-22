@@ -1,5 +1,5 @@
-# sentry-native benchmarks
+## Benchmarks
 
-- [Windows](./Windows/)
-- [macOS](./macOS/)
 - [Linux](./Linux/)
+- [macOS](./macOS/)
+- [Windows](./Windows/)
