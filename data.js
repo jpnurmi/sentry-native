@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1745398085202,
+  "lastUpdate": 1745398938643,
   "repoUrl": "https://github.com/jpnurmi/sentry-native",
   "entries": {
     "Windows": [
@@ -1058,6 +1058,72 @@ window.BENCHMARK_DATA = {
             "value": 6.429958000012448,
             "unit": "ms",
             "extra": "cpu 0.9330000000002947 ms\nfoo\nbar"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jpnurmi@gmail.com",
+            "name": "J-P Nurmi",
+            "username": "jpnurmi"
+          },
+          "committer": {
+            "email": "jpnurmi@gmail.com",
+            "name": "J-P Nurmi",
+            "username": "jpnurmi"
+          },
+          "distinct": true,
+          "id": "0ef24967b38c0c634035f908eae74908342bf7e2",
+          "message": "extra??",
+          "timestamp": "2025-04-23T10:58:26+02:00",
+          "tree_id": "501303449c2b071ffa56200d6424d0e3fb641b35",
+          "url": "https://github.com/jpnurmi/sentry-native/commit/0ef24967b38c0c634035f908eae74908342bf7e2"
+        },
+        "date": 1745398937053,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "tests/benchmark.py::test_benchmark[init-none]",
+            "value": 3.28041700004178,
+            "unit": "ms",
+            "extra": "Real 3.280 ms\nCPU 1.792 ms (24 MHz)"
+          },
+          {
+            "name": "tests/benchmark.py::test_benchmark[init-inproc]",
+            "value": 3.8612089999787713,
+            "unit": "ms",
+            "extra": "Real 3.861 ms\nCPU 2.125 ms (24 MHz)"
+          },
+          {
+            "name": "tests/benchmark.py::test_benchmark[init-breakpad]",
+            "value": 3.6894999999503852,
+            "unit": "ms",
+            "extra": "Real 3.689 ms\nCPU 2.151 ms (24 MHz)"
+          },
+          {
+            "name": "tests/benchmark.py::test_benchmark[init-crashpad]",
+            "value": 14.669541999978719,
+            "unit": "ms",
+            "extra": "Real 14.670 ms\nCPU 5.339 ms (24 MHz)"
+          },
+          {
+            "name": "tests/benchmark.py::test_benchmark[backend-inproc]",
+            "value": 0.038374999917323294,
+            "unit": "ms",
+            "extra": "Real 0.038 ms\nCPU 0.038 ms (24 MHz)"
+          },
+          {
+            "name": "tests/benchmark.py::test_benchmark[backend-breakpad]",
+            "value": 0.32679100002042105,
+            "unit": "ms",
+            "extra": "Real 0.327 ms\nCPU 0.326 ms (24 MHz)"
+          },
+          {
+            "name": "tests/benchmark.py::test_benchmark[backend-crashpad]",
+            "value": 8.468666999988272,
+            "unit": "ms",
+            "extra": "Real 8.469 ms\nCPU 1.203 ms (24 MHz)"
           }
         ]
       }
