@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1745400617708,
+  "lastUpdate": 1745400636729,
   "repoUrl": "https://github.com/jpnurmi/sentry-native",
   "entries": {
     "Windows": [
@@ -2380,6 +2380,72 @@ window.BENCHMARK_DATA = {
             "value": 2.1349699999859695,
             "unit": "ms",
             "extra": "2.135ms (CPU 0.787ms)"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jpnurmi@gmail.com",
+            "name": "J-P Nurmi",
+            "username": "jpnurmi"
+          },
+          "committer": {
+            "email": "jpnurmi@gmail.com",
+            "name": "J-P Nurmi",
+            "username": "jpnurmi"
+          },
+          "distinct": true,
+          "id": "09cd0eca58797bd256992a3bdfc342a0f72fc2f5",
+          "message": "Revert \"SENTRY_DEBUG=1 & --capture=no\"\n\nThis reverts commit 68788889613d9af3ec6450179c450512d6704164.",
+          "timestamp": "2025-04-23T11:26:24+02:00",
+          "tree_id": "a5c54c928a7f6e5132417e8e99f84c3303973d73",
+          "url": "https://github.com/jpnurmi/sentry-native/commit/09cd0eca58797bd256992a3bdfc342a0f72fc2f5"
+        },
+        "date": 1745400636065,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "tests/benchmark.py::test_benchmark[init-none]",
+            "value": 1.6077750000107471,
+            "unit": "ms",
+            "extra": "1.608ms (CPU 0.880ms)"
+          },
+          {
+            "name": "tests/benchmark.py::test_benchmark[init-inproc]",
+            "value": 0.7761210000012397,
+            "unit": "ms",
+            "extra": "0.776ms (CPU 0.775ms)"
+          },
+          {
+            "name": "tests/benchmark.py::test_benchmark[init-breakpad]",
+            "value": 0.8288599999843882,
+            "unit": "ms",
+            "extra": "0.829ms (CPU 0.828ms)"
+          },
+          {
+            "name": "tests/benchmark.py::test_benchmark[init-crashpad]",
+            "value": 3.217387000006511,
+            "unit": "ms",
+            "extra": "3.217ms (CPU 1.724ms)"
+          },
+          {
+            "name": "tests/benchmark.py::test_benchmark[backend-inproc]",
+            "value": 0.015919999981406363,
+            "unit": "ms",
+            "extra": "0.016ms (CPU 0.015ms)"
+          },
+          {
+            "name": "tests/benchmark.py::test_benchmark[backend-breakpad]",
+            "value": 0.025037000000338594,
+            "unit": "ms",
+            "extra": "0.025ms (CPU 0.024ms)"
+          },
+          {
+            "name": "tests/benchmark.py::test_benchmark[backend-crashpad]",
+            "value": 2.0323220000477704,
+            "unit": "ms",
+            "extra": "2.032ms (CPU 0.667ms)"
           }
         ]
       }
