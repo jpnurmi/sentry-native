@@ -1412,3 +1412,49 @@ sentry_capture_minidump_n(const char *path, size_t path_len)
 
     return sentry_uuid_nil();
 }
+
+void
+sentry_add_attachment(const char *path)
+{
+    SENTRY_WITH_OPTIONS (options) {
+        if (options->backend && options->backend->add_attachment_func) {
+            options->backend->add_attachment_func(
+                options->backend, sentry__path_from_str(path));
+        }
+    }
+}
+
+void
+sentry_remove_attachment(const char *path)
+{
+    SENTRY_WITH_OPTIONS (options) {
+        if (options->backend && options->backend->remove_attachment_func) {
+            options->backend->remove_attachment_func(
+                options->backend, sentry__path_from_str(path));
+        }
+    }
+}
+
+#ifdef SENTRY_PLATFORM_WINDOWS
+void
+sentry_add_attachmentw(const wchar_t *path)
+{
+    SENTRY_WITH_OPTIONS (options) {
+        if (options->backend && options->backend->add_attachment_func) {
+            options->backend->add_attachment_func(
+                options->backend, sentry__path_from_wstr(path));
+        }
+    }
+}
+
+void
+sentry_remove_attachmentw(const wchar_t *path)
+{
+    SENTRY_WITH_OPTIONS (options) {
+        if (options->backend && options->backend->remove_attachment_func) {
+            options->backend->remove_attachment_func(
+                options->backend, sentry__path_from_wstr(path));
+        }
+    }
+}
+#endif

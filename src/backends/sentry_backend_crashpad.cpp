@@ -660,6 +660,28 @@ crashpad_backend_prune_database(sentry_backend_t *backend)
     crashpad::PruneCrashReportDatabase(data->db, &condition);
 }
 
+static void
+crashpad_backend_add_attachment(
+    sentry_backend_t *backend, sentry_path_t *attachment)
+{
+    auto *data = static_cast<crashpad_state_t *>(backend->data);
+    if (data->client) {
+        data->client->AddAttachment(base::FilePath(attachment->path));
+    }
+    sentry__path_free(attachment);
+}
+
+static void
+crashpad_backend_remove_attachment(
+    sentry_backend_t *backend, sentry_path_t *attachment)
+{
+    auto *data = static_cast<crashpad_state_t *>(backend->data);
+    if (data->client) {
+        data->client->RemoveAttachment(base::FilePath(attachment->path));
+    }
+    sentry__path_free(attachment);
+}
+
 sentry_backend_t *
 sentry__backend_new(void)
 {
@@ -687,6 +709,8 @@ sentry__backend_new(void)
     backend->user_consent_changed_func = crashpad_backend_user_consent_changed;
     backend->get_last_crash_func = crashpad_backend_last_crash;
     backend->prune_database_func = crashpad_backend_prune_database;
+    backend->add_attachment_func = crashpad_backend_add_attachment;
+    backend->remove_attachment_func = crashpad_backend_remove_attachment;
     backend->data = data;
     backend->can_capture_after_shutdown = true;
 

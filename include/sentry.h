@@ -2336,6 +2336,14 @@ SENTRY_EXPERIMENTAL_API const char *sentry_sdk_name(void);
  */
 SENTRY_EXPERIMENTAL_API const char *sentry_sdk_user_agent(void);
 
+SENTRY_API void sentry_add_attachment(const char *path);
+SENTRY_API void sentry_remove_attachment(const char *path);
+
+#ifdef SENTRY_PLATFORM_WINDOWS
+SENTRY_API void sentry_add_attachmentw(const wchar_t *path);
+SENTRY_API void sentry_remove_attachmentw(const wchar_t *path);
+#endif
+
 #ifdef __cplusplus
 }
 #endif
