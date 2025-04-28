@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1745831516936,
+  "lastUpdate": 1745862933162,
   "repoUrl": "https://github.com/jpnurmi/sentry-native",
   "entries": {
     "Windows": [
@@ -5092,6 +5092,66 @@ window.BENCHMARK_DATA = {
             "value": 2.0343980000347983,
             "unit": "ms",
             "extra": "Min 1.963ms\nMax 2.098ms\nMean 2.034ms\nStdDev 0.052ms\nMedian 2.034ms\nCPU 0.632ms"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jpnurmi@gmail.com",
+            "name": "J-P Nurmi",
+            "username": "jpnurmi"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "01b740a954bbb339f263773dbacabbbe99eb0c41",
+          "message": "test: benchmark SDK startup (#1209)\n\n* test: benchmark SDK startup\n\n* CI: permissions required for github-action-benchmark\n\nhttps://github.com/benchmark-action/github-action-benchmark?tab=readme-ov-file#charts-on-github-pages-1\n\n* tests/conftest.py: extract constants\n\n* Warmup run\n\n* Add min/max/mean/stddev\n\n* Filter out empty string from formatting\n\n* Move tests/unit/benchmark* -> tests/benchmark/\n\n* Uncomment github-action-benchmark",
+          "timestamp": "2025-04-28T19:38:01+02:00",
+          "tree_id": "59abb8c8222185e7084fa7d5fc8d6a18ffa2072b",
+          "url": "https://github.com/jpnurmi/sentry-native/commit/01b740a954bbb339f263773dbacabbbe99eb0c41"
+        },
+        "date": 1745862932186,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "tests/benchmark.py::test_benchmark[init-inproc]",
+            "value": 0.7212159999880896,
+            "unit": "ms",
+            "extra": "Min 0.700ms\nMax 0.746ms\nMean 0.720ms\nStdDev 0.017ms\nMedian 0.721ms\nCPU 0.720ms"
+          },
+          {
+            "name": "tests/benchmark.py::test_benchmark[init-breakpad]",
+            "value": 0.7528249999779746,
+            "unit": "ms",
+            "extra": "Min 0.732ms\nMax 0.932ms\nMean 0.786ms\nStdDev 0.083ms\nMedian 0.753ms\nCPU 0.758ms"
+          },
+          {
+            "name": "tests/benchmark.py::test_benchmark[init-crashpad]",
+            "value": 2.9301179999947635,
+            "unit": "ms",
+            "extra": "Min 2.911ms\nMax 3.083ms\nMean 2.968ms\nStdDev 0.070ms\nMedian 2.930ms\nCPU 1.531ms"
+          },
+          {
+            "name": "tests/benchmark.py::test_benchmark[backend-inproc]",
+            "value": 0.013034000005518465,
+            "unit": "ms",
+            "extra": "Min 0.013ms\nMax 0.013ms\nMean 0.013ms\nStdDev 0.000ms\nMedian 0.013ms\nCPU 0.012ms"
+          },
+          {
+            "name": "tests/benchmark.py::test_benchmark[backend-breakpad]",
+            "value": 0.022903000001406326,
+            "unit": "ms",
+            "extra": "Min 0.022ms\nMax 0.024ms\nMean 0.023ms\nStdDev 0.001ms\nMedian 0.023ms\nCPU 0.022ms"
+          },
+          {
+            "name": "tests/benchmark.py::test_benchmark[backend-crashpad]",
+            "value": 1.8347120000044015,
+            "unit": "ms",
+            "extra": "Min 1.814ms\nMax 1.905ms\nMean 1.843ms\nStdDev 0.036ms\nMedian 1.835ms\nCPU 0.576ms"
           }
         ]
       }
