@@ -9,7 +9,7 @@
 /**
  * This represents the current scope.
  */
-typedef struct sentry_scope_s {
+struct sentry_scope_s {
     char *transaction;
     sentry_value_t fingerprint;
     sentry_value_t user;
@@ -30,7 +30,7 @@ typedef struct sentry_scope_s {
     // `name` property nested in transaction_object or span.
     sentry_transaction_t *transaction_object;
     sentry_span_t *span;
-} sentry_scope_t;
+};
 
 /**
  * When applying a scope to an event object, this specifies all the additional
@@ -89,6 +89,11 @@ sentry_scope_t *sentry__scope_push(void);
  * This will pop the current scope off the thread-local stack of scopes.
  */
 void sentry__scope_pop(void);
+
+void sentry__scope_set_fingerprint_va(
+    sentry_scope_t *scope, const char *fingerprint, va_list va);
+void sentry__scope_set_fingerprint_nva(sentry_scope_t *scope,
+    const char *fingerprint, size_t fingerprint_len, va_list va);
 
 /**
  * These are convenience macros to automatically lock/unlock a scope inside a
