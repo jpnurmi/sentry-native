@@ -154,8 +154,10 @@ send_envelope_with_threadid(const sentry_envelope_t *envelope, void *data)
         sentry_value_t extra = sentry_value_get_by_key(event, "extra");
         const char *thread_id = sentry_value_as_string(
             sentry_value_get_by_key(extra, "thread_id"));
+        sentry_value_t current_thread_id = get_current_threadid();
         TEST_CHECK_STRING_EQUAL(
-            thread_id, sentry_value_as_string(get_current_threadid()));
+            thread_id, sentry_value_as_string(current_thread_id));
+        sentry_value_decref(current_thread_id);
     }
 }
 
