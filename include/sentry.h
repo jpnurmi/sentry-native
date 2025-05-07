@@ -2419,6 +2419,8 @@ SENTRY_API sentry_level_t sentry_scope_get_level(const sentry_scope_t *scope);
 SENTRY_API void sentry_scope_set_level(
     sentry_scope_t *scope, sentry_level_t level);
 
+SENTRY_API void sentry_scope_clear(sentry_scope_t *scope);
+
 #ifdef __cplusplus
 }
 #endif

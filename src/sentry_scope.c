@@ -75,6 +75,24 @@ get_client_sdk(void)
     return client_sdk;
 }
 
+static void
+init_scope(sentry_scope_t *scope)
+{
+    memset(scope, 0, sizeof(sentry_scope_t));
+    scope->transaction = NULL;
+    scope->fingerprint = sentry_value_new_null();
+    scope->user = sentry_value_new_null();
+    scope->tags = sentry_value_new_object();
+    scope->extra = sentry_value_new_object();
+    scope->contexts = sentry_value_new_object();
+    sentry_value_set_by_key(scope->contexts, "os", sentry__get_os_context());
+    scope->breadcrumbs = sentry_value_new_list();
+    scope->level = SENTRY_LEVEL_ERROR;
+    scope->client_sdk = get_client_sdk();
+    scope->transaction_object = NULL;
+    scope->span = NULL;
+}
+
 static sentry_scope_t *
 get_scope(void)
 {
@@ -82,19 +100,7 @@ get_scope(void)
         return &g_scope;
     }
 
-    memset(&g_scope, 0, sizeof(sentry_scope_t));
-    g_scope.transaction = NULL;
-    g_scope.fingerprint = sentry_value_new_null();
-    g_scope.user = sentry_value_new_null();
-    g_scope.tags = sentry_value_new_object();
-    g_scope.extra = sentry_value_new_object();
-    g_scope.contexts = sentry_value_new_object();
-    sentry_value_set_by_key(g_scope.contexts, "os", sentry__get_os_context());
-    g_scope.breadcrumbs = sentry_value_new_list();
-    g_scope.level = SENTRY_LEVEL_ERROR;
-    g_scope.client_sdk = get_client_sdk();
-    g_scope.transaction_object = NULL;
-    g_scope.span = NULL;
+    init_scope(&g_scope);
 
     g_scope_initialized = true;
 
@@ -774,4 +780,11 @@ void
 sentry_scope_set_level(sentry_scope_t *scope, sentry_level_t level)
 {
     scope->level = level;
+}
+
+void
+sentry_scope_clear(sentry_scope_t *scope)
+{
+    cleanup_scope(scope);
+    init_scope(scope);
 }

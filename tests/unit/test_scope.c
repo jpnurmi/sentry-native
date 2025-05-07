@@ -314,3 +314,77 @@ SENTRY_TEST(scope_user)
 
     sentry_close();
 }
+
+SENTRY_TEST(scope_clear)
+{
+    SENTRY_TEST_OPTIONS_NEW(options);
+    sentry_init(options);
+
+    sentry_value_t user = sentry_value_new_object();
+    sentry_value_set_by_key(
+        user, "username", sentry_value_new_string("test-user"));
+    sentry_set_user(user);
+
+    sentry_set_tag("test-tag", "ttt");
+    sentry_set_extra("test-extra", sentry_value_new_string("eee"));
+    sentry_set_context("test-context", sentry_value_new_string("ccc"));
+    sentry_set_transaction("test-transaction");
+    sentry_set_fingerprint("test-fingerprint", NULL);
+
+    sentry_scope_t *local_scope = sentry__scope_push();
+
+    SENTRY_WITH_SCOPE (cloned_scope) {
+        TEST_CHECK(cloned_scope == local_scope);
+        TEST_CHECK_JSON_VALUE(sentry_scope_get_user(cloned_scope),
+            "{\"username\":\"test-user\"}");
+        TEST_CHECK_STRING_EQUAL(
+            sentry_scope_get_tag(cloned_scope, "test-tag"), "ttt");
+        TEST_CHECK_STRING_EQUAL(sentry_value_as_string(sentry_scope_get_extra(
+                                    cloned_scope, "test-extra")),
+            "eee");
+        TEST_CHECK_STRING_EQUAL(sentry_value_as_string(sentry_scope_get_context(
+                                    cloned_scope, "test-context")),
+            "ccc");
+        TEST_CHECK_STRING_EQUAL(
+            sentry_scope_get_transaction(cloned_scope), "test-transaction");
+        TEST_CHECK_JSON_VALUE(sentry_scope_get_fingerprint(cloned_scope),
+            "[\"test-fingerprint\"]");
+    }
+
+    sentry_scope_clear(local_scope);
+
+    SENTRY_WITH_SCOPE (modified_scope) {
+        TEST_CHECK(modified_scope == local_scope);
+        TEST_CHECK(sentry_value_is_null(sentry_scope_get_user(modified_scope)));
+        TEST_CHECK(!sentry_scope_get_tag(modified_scope, "test-tag"));
+        TEST_CHECK(sentry_value_is_null(
+            sentry_scope_get_extra(modified_scope, "test-extra")));
+        TEST_CHECK(sentry_value_is_null(
+            sentry_scope_get_context(modified_scope, "test-context")));
+        TEST_CHECK(!sentry_scope_get_transaction(modified_scope));
+        TEST_CHECK(
+            sentry_value_is_null(sentry_scope_get_fingerprint(modified_scope)));
+    }
+
+    sentry__scope_pop();
+
+    SENTRY_WITH_SCOPE (global_scope) {
+        TEST_CHECK(global_scope != local_scope);
+        TEST_CHECK_JSON_VALUE(sentry_scope_get_user(global_scope),
+            "{\"username\":\"test-user\"}");
+        TEST_CHECK_STRING_EQUAL(
+            sentry_scope_get_tag(global_scope, "test-tag"), "ttt");
+        TEST_CHECK_STRING_EQUAL(sentry_value_as_string(sentry_scope_get_extra(
+                                    global_scope, "test-extra")),
+            "eee");
+        TEST_CHECK_STRING_EQUAL(sentry_value_as_string(sentry_scope_get_context(
+                                    global_scope, "test-context")),
+            "ccc");
+        TEST_CHECK_STRING_EQUAL(
+            sentry_scope_get_transaction(global_scope), "test-transaction");
+        TEST_CHECK_JSON_VALUE(sentry_scope_get_fingerprint(global_scope),
+            "[\"test-fingerprint\"]");
+    }
+
+    sentry_close();
+}
