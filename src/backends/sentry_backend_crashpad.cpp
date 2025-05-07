@@ -18,6 +18,7 @@ extern "C" {
 #    include "sentry_unix_pageallocator.h"
 #endif
 #include "sentry_utils.h"
+#include "sentry_value.h"
 #include "transports/sentry_disk_transport.h"
 }
 
@@ -607,18 +608,30 @@ static void
 crashpad_backend_restore_breadcrumbs(
     sentry_backend_t *backend, sentry_value_t breadcrumbs)
 {
-    // TODO: optimize
-    crashpad_backend_clear_breadcrumbs(backend);
+    auto *data = static_cast<crashpad_state_t *>(backend->data);
 
-    sentry_value_t list = sentry__value_ring_buffer_to_list(breadcrumbs);
-    size_t len = sentry_value_get_length(list);
-    SENTRY_WITH_OPTIONS (options) {
-        for (size_t i = 0; i < len; i++) {
-            sentry_value_t breadcrumb = sentry_value_get_by_index(list, i);
-            crashpad_backend_add_breadcrumb(backend, breadcrumb, options);
-        }
+    size_t mpack_size;
+    char *mpack
+        = sentry__value_ring_buffer_to_msgpack(breadcrumbs, &mpack_size);
+
+    if (!mpack) {
+        return;
     }
-    sentry_value_decref(list);
+
+    data->num_breadcrumbs = MAX(sentry_value_get_length(breadcrumbs) - 1, 0);
+
+    int rv
+        = sentry__path_write_buffer(data->breadcrumb1_path, mpack, mpack_size);
+    sentry_free(mpack);
+
+    if (sentry__path_is_file(data->breadcrumb2_path)) {
+        sentry__path_remove(data->breadcrumb2_path);
+        sentry__path_touch(data->breadcrumb2_path);
+    }
+
+    if (rv != 0) {
+        SENTRY_WARN("restoring breadcrumbs to msgpack failed");
+    }
 }
 
 static void
