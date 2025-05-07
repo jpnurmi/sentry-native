@@ -158,6 +158,7 @@ The example currently supports the following commands:
 - `traces-sampler`: Installs a traces sampler callback function when used alongside `capture-transaction`.
 - `attach-view-hierarchy`: Adds a `view-hierarchy.json` attachment file, giving it the proper `attachment_type` and `content_type`. 
  This file can be found in `./tests/fixtures/view-hierachy.json`.
+- `capture-with-scope`: Captures an event with a local scope.
  
 Only on Linux using crashpad:
 - `crashpad-wait-for-upload`: Couples application shutdown to complete the upload in the `crashpad_handler`. 
