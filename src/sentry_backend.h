@@ -22,6 +22,9 @@ struct sentry_backend_s {
     // `decref`-d internally.
     void (*add_breadcrumb_func)(sentry_backend_t *, sentry_value_t breadcrumb,
         const sentry_options_t *options);
+    void (*clear_breadcrumbs_func)(sentry_backend_t *);
+    void (*restore_breadcrumbs_func)(
+        sentry_backend_t *, sentry_value_t breadcrumbs);
     void (*user_consent_changed_func)(sentry_backend_t *);
     uint64_t (*get_last_crash_func)(sentry_backend_t *);
     void (*prune_database_func)(sentry_backend_t *);

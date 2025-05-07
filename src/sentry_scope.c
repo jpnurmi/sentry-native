@@ -460,6 +460,17 @@ sentry__scope_pop(void)
     cleanup_scope(old_node->scope);
     sentry_free(old_node->scope);
     sentry_free(old_node);
+
+    sentry_value_t breadcrumbs = sentry_value_new_null();
+    SENTRY_WITH_SCOPE (scope) {
+        breadcrumbs = scope->breadcrumbs;
+    }
+    SENTRY_WITH_OPTIONS (options) {
+        if (options->backend && options->backend->restore_breadcrumbs_func) {
+            options->backend->restore_breadcrumbs_func(
+                options->backend, breadcrumbs);
+        }
+    }
 }
 
 void
@@ -482,7 +493,11 @@ sentry_scope_add_breadcrumb(sentry_scope_t *scope, sentry_value_t breadcrumb)
 void
 sentry_scope_clear_breadcrumbs(sentry_scope_t *scope)
 {
-    // TODO: options->backend->clear_breadcrumbs_func(options->backend)
+    SENTRY_WITH_OPTIONS (options) {
+        if (options->backend && options->backend->clear_breadcrumbs_func) {
+            options->backend->clear_breadcrumbs_func(options->backend);
+        }
+    }
 
     sentry_value_decref(scope->breadcrumbs);
     scope->breadcrumbs = sentry_value_new_list();

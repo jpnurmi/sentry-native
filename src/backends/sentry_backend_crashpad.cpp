@@ -588,6 +588,40 @@ crashpad_backend_add_breadcrumb(sentry_backend_t *backend,
 }
 
 static void
+crashpad_backend_clear_breadcrumbs(sentry_backend_t *backend)
+{
+    auto *data = static_cast<crashpad_state_t *>(backend->data);
+
+    data->num_breadcrumbs = 0;
+    if (sentry__path_is_file(data->breadcrumb1_path)) {
+        sentry__path_remove(data->breadcrumb1_path);
+        sentry__path_touch(data->breadcrumb1_path);
+    }
+    if (sentry__path_is_file(data->breadcrumb2_path)) {
+        sentry__path_remove(data->breadcrumb2_path);
+        sentry__path_touch(data->breadcrumb2_path);
+    }
+}
+
+static void
+crashpad_backend_restore_breadcrumbs(
+    sentry_backend_t *backend, sentry_value_t breadcrumbs)
+{
+    // TODO: optimize
+    crashpad_backend_clear_breadcrumbs(backend);
+
+    sentry_value_t list = sentry__value_ring_buffer_to_list(breadcrumbs);
+    size_t len = sentry_value_get_length(list);
+    SENTRY_WITH_OPTIONS (options) {
+        for (size_t i = 0; i < len; i++) {
+            sentry_value_t breadcrumb = sentry_value_get_by_index(list, i);
+            crashpad_backend_add_breadcrumb(backend, breadcrumb, options);
+        }
+    }
+    sentry_value_decref(list);
+}
+
+static void
 crashpad_backend_free(sentry_backend_t *backend)
 {
     auto *data = static_cast<crashpad_state_t *>(backend->data);
@@ -684,6 +718,8 @@ sentry__backend_new(void)
     backend->free_func = crashpad_backend_free;
     backend->flush_scope_func = crashpad_backend_flush_scope;
     backend->add_breadcrumb_func = crashpad_backend_add_breadcrumb;
+    backend->clear_breadcrumbs_func = crashpad_backend_clear_breadcrumbs;
+    backend->restore_breadcrumbs_func = crashpad_backend_restore_breadcrumbs;
     backend->user_consent_changed_func = crashpad_backend_user_consent_changed;
     backend->get_last_crash_func = crashpad_backend_last_crash;
     backend->prune_database_func = crashpad_backend_prune_database;
