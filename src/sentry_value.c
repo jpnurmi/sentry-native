@@ -1000,7 +1000,7 @@ sentry_value_to_json(sentry_value_t value)
 }
 
 static void
-value_to_msgpack(mpack_writer_t *writer, sentry_value_t value)
+value_to_msgpack(mpack_writer_t *writer, sentry_value_t value, int level)
 {
     switch (sentry_value_get_type(value)) {
     case SENTRY_VALUE_TYPE_NULL:
@@ -1022,11 +1022,15 @@ value_to_msgpack(mpack_writer_t *writer, sentry_value_t value)
     case SENTRY_VALUE_TYPE_LIST: {
         const list_t *l = value_as_thing(value)->payload._ptr;
 
-        mpack_start_array(writer, (uint32_t)l->len);
-        for (size_t i = 0; i < l->len; i++) {
-            value_to_msgpack(writer, l->items[i]);
+        if (level >= 0) {
+            mpack_start_array(writer, (uint32_t)l->len);
         }
-        mpack_finish_array(writer);
+        for (size_t i = 0; i < l->len; i++) {
+            value_to_msgpack(writer, l->items[i], level + 1);
+        }
+        if (level >= 0) {
+            mpack_finish_array(writer);
+        }
         break;
     }
     case SENTRY_VALUE_TYPE_OBJECT: {
@@ -1035,7 +1039,7 @@ value_to_msgpack(mpack_writer_t *writer, sentry_value_t value)
         mpack_start_map(writer, (uint32_t)o->len);
         for (size_t i = 0; i < o->len; i++) {
             mpack_write_cstr(writer, o->pairs[i].k);
-            value_to_msgpack(writer, o->pairs[i].v);
+            value_to_msgpack(writer, o->pairs[i].v, level + 1);
         }
         mpack_finish_map(writer);
         break;
@@ -1050,7 +1054,27 @@ sentry_value_to_msgpack(sentry_value_t value, size_t *size_out)
     char *buf;
     size_t size;
     mpack_writer_init_growable(&writer, &buf, &size);
-    value_to_msgpack(&writer, value);
+    value_to_msgpack(&writer, value, 0);
+    mpack_writer_destroy(&writer);
+    *size_out = size;
+    return buf;
+}
+
+char *
+sentry__value_ring_buffer_to_msgpack(const sentry_value_t rb, size_t *size_out)
+{
+    sentry_value_t list = sentry__value_ring_buffer_to_list(rb);
+    if (sentry_value_is_null(list)) {
+        *size_out = 0;
+        return NULL;
+    }
+
+    mpack_writer_t writer;
+    char *buf;
+    size_t size;
+    mpack_writer_init_growable(&writer, &buf, &size);
+    value_to_msgpack(&writer, list, -1);
+    sentry_value_decref(list);
     mpack_writer_destroy(&writer);
     *size_out = size;
     return buf;

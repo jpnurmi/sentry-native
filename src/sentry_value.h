@@ -99,6 +99,11 @@ int sentry__value_append_ringbuffer(
 sentry_value_t sentry__value_ring_buffer_to_list(sentry_value_t rb);
 
 /**
+ * Serializes ring buffer to a flat msgpack stream.
+ */
+char *sentry__value_ring_buffer_to_msgpack(sentry_value_t rb, size_t *size_out);
+
+/**
  * Deep-merges object src into dst.
  *
  * For each key-value pair in the src object the same key in the dst object

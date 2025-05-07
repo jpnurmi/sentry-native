@@ -1,6 +1,9 @@
 #include "sentry_path.h"
 #include "sentry_scope.h"
 #include "sentry_testsupport.h"
+#include "sentry_value.h"
+
+#include "../vendor/mpack.h"
 
 SENTRY_TEST(mpack_removed_tags)
 {
@@ -56,4 +59,39 @@ SENTRY_TEST(mpack_newlines)
 
     sentry__path_remove(file);
     sentry__path_free(file);
+}
+
+SENTRY_TEST(mpack_ring_buffer)
+{
+    sentry_value_t rb = sentry_value_new_list();
+
+    sentry__value_append_ringbuffer(
+        rb, sentry_value_new_breadcrumb("info", "foo"), 3);
+    sentry__value_append_ringbuffer(
+        rb, sentry_value_new_breadcrumb("info", "bar"), 3);
+    sentry__value_append_ringbuffer(
+        rb, sentry_value_new_breadcrumb("info", "baz"), 3);
+    sentry__value_append_ringbuffer(
+        rb, sentry_value_new_breadcrumb("info", "qux"), 3);
+
+    size_t size;
+    char *buf = sentry__value_ring_buffer_to_msgpack(rb, &size);
+
+    mpack_reader_t reader;
+    mpack_reader_init_data(&reader, buf, size);
+
+    // a flat stream of 3 objects (not an array)
+    for (int i = 0; i < 3; i++) {
+        mpack_tag_t tag = mpack_peek_tag(&reader);
+        TEST_CHECK(tag.type == mpack_type_map);
+        mpack_discard(&reader);
+    }
+
+    mpack_tag_t tag = mpack_peek_tag(&reader);
+    TEST_CHECK(tag.type == mpack_type_nil);
+
+    mpack_reader_destroy(&reader);
+
+    sentry_free(buf);
+    sentry_value_decref(rb);
 }
