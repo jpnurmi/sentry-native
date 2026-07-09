@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1783595066425,
+  "lastUpdate": 1783596391040,
   "repoUrl": "https://github.com/jpnurmi/sentry-native",
   "entries": {
     "Linux": [
@@ -27962,6 +27962,122 @@ window.BENCHMARK_DATA = {
           {
             "name": "Scope add_breadcrumb (native)",
             "value": 0.007375362999994195,
+            "unit": "ms",
+            "extra": "Min 0.007ms\nMax 0.007ms\nMean 0.007ms\nMedian 0.007ms\nCPU 0.007ms"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "name": "jpnurmi",
+            "username": "jpnurmi"
+          },
+          "committer": {
+            "name": "jpnurmi",
+            "username": "jpnurmi"
+          },
+          "id": "bbd0431e73c81af6b82bf45b4f3f2b9dda69d826",
+          "message": "TEST: Sleeps and early returns for benchmarking...",
+          "timestamp": "2026-07-09T10:56:47Z",
+          "url": "https://github.com/jpnurmi/sentry-native/pull/3/commits/bbd0431e73c81af6b82bf45b4f3f2b9dda69d826"
+        },
+        "date": 1783596390917,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "SDK init (inproc)",
+            "value": 0.8139040000116893,
+            "unit": "ms",
+            "extra": "Min 0.801ms\nMax 0.854ms\nMean 0.823ms\nStdDev 0.023ms\nMedian 0.814ms\nCPU 0.814ms"
+          },
+          {
+            "name": "SDK init (breakpad)",
+            "value": 4.91625400000828,
+            "unit": "ms",
+            "extra": "Min 4.896ms\nMax 4.951ms\nMean 4.919ms\nStdDev 0.021ms\nMedian 4.916ms\nCPU 0.860ms"
+          },
+          {
+            "name": "SDK init (crashpad)",
+            "value": 19.386839000020473,
+            "unit": "ms",
+            "extra": "Min 19.250ms\nMax 19.520ms\nMean 19.378ms\nStdDev 0.123ms\nMedian 19.387ms\nCPU 1.751ms"
+          },
+          {
+            "name": "SDK init (native)",
+            "value": 11.316182999991042,
+            "unit": "ms",
+            "extra": "Min 11.216ms\nMax 11.821ms\nMean 11.399ms\nStdDev 0.249ms\nMedian 11.316ms\nCPU 7.145ms"
+          },
+          {
+            "name": "Backend startup (inproc)",
+            "value": 0.002585000004273752,
+            "unit": "ms",
+            "extra": "Min 0.002ms\nMax 0.003ms\nMean 0.003ms\nStdDev 0.000ms\nMedian 0.003ms\nCPU 0.002ms"
+          },
+          {
+            "name": "Backend startup (breakpad)",
+            "value": 4.099349999989954,
+            "unit": "ms",
+            "extra": "Min 4.098ms\nMax 4.100ms\nMean 4.099ms\nStdDev 0.001ms\nMedian 4.099ms\nCPU 0.042ms"
+          },
+          {
+            "name": "Backend startup (crashpad)",
+            "value": 18.127209999988736,
+            "unit": "ms",
+            "extra": "Min 17.918ms\nMax 18.236ms\nMean 18.075ms\nStdDev 0.147ms\nMedian 18.127ms\nCPU 0.642ms"
+          },
+          {
+            "name": "Backend startup (native)",
+            "value": 10.793393999989576,
+            "unit": "ms",
+            "extra": "Min 10.524ms\nMax 11.103ms\nMean 10.793ms\nStdDev 0.222ms\nMedian 10.793ms\nCPU 6.517ms"
+          },
+          {
+            "name": "Scope set_tag (inproc)",
+            "value": 0.004877766000021211,
+            "unit": "ms",
+            "extra": "Min 0.005ms\nMax 0.005ms\nMean 0.005ms\nMedian 0.005ms\nCPU 0.005ms"
+          },
+          {
+            "name": "Scope add_breadcrumb (inproc)",
+            "value": 0.0006013349999989259,
+            "unit": "ms",
+            "extra": "Min 0.001ms\nMax 0.001ms\nMean 0.001ms\nMedian 0.001ms\nCPU 0.001ms"
+          },
+          {
+            "name": "Scope set_tag (breakpad)",
+            "value": 0.004801763999978448,
+            "unit": "ms",
+            "extra": "Min 0.005ms\nMax 0.005ms\nMean 0.005ms\nMedian 0.005ms\nCPU 0.005ms"
+          },
+          {
+            "name": "Scope add_breadcrumb (breakpad)",
+            "value": 0.0005735930000128064,
+            "unit": "ms",
+            "extra": "Min 0.001ms\nMax 0.001ms\nMean 0.001ms\nMedian 0.001ms\nCPU 0.001ms"
+          },
+          {
+            "name": "Scope set_tag (crashpad)",
+            "value": 0.0046557510000013735,
+            "unit": "ms",
+            "extra": "Min 0.005ms\nMax 0.005ms\nMean 0.005ms\nMedian 0.005ms\nCPU 0.005ms"
+          },
+          {
+            "name": "Scope add_breadcrumb (crashpad)",
+            "value": 0.007205261999985169,
+            "unit": "ms",
+            "extra": "Min 0.007ms\nMax 0.007ms\nMean 0.007ms\nMedian 0.007ms\nCPU 0.007ms"
+          },
+          {
+            "name": "Scope set_tag (native)",
+            "value": 1.8068050740000103,
+            "unit": "ms",
+            "extra": "Min 1.807ms\nMax 1.807ms\nMean 1.807ms\nMedian 1.807ms\nCPU 1.778ms"
+          },
+          {
+            "name": "Scope add_breadcrumb (native)",
+            "value": 0.007199500000012904,
             "unit": "ms",
             "extra": "Min 0.007ms\nMax 0.007ms\nMean 0.007ms\nMedian 0.007ms\nCPU 0.007ms"
           }
