@@ -514,6 +514,8 @@ startup_inproc_backend(
         backend->data = &g_backend_config;
     }
 
+    return 0;
+
     if (start_handler_thread() != 0) {
         return 1;
     }
@@ -602,6 +604,8 @@ startup_inproc_backend(
     if (backend) {
         backend->data = &g_backend_config;
     }
+
+    return 0;
 
 #    if !defined(SENTRY_BUILD_SHARED)                                          \
         && defined(SENTRY_THREAD_STACK_GUARANTEE_AUTO_INIT)

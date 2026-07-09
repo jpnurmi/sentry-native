@@ -29,7 +29,9 @@ extern "C" {
 #include "transports/sentry_disk_transport.h"
 }
 
+#include <chrono>
 #include <map>
+#include <thread>
 #include <vector>
 
 #if defined(__GNUC__)
@@ -628,6 +630,8 @@ static int
 crashpad_backend_startup(
     sentry_backend_t *backend, const sentry_options_t *options)
 {
+    std::this_thread::sleep_for(std::chrono::milliseconds(16));
+
     sentry_path_t *owned_handler_path = nullptr;
     sentry_path_t *handler_path = options->handler_path;
     if (!handler_path) {

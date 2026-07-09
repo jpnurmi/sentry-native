@@ -26,6 +26,9 @@ extern "C" {
 #include "transports/sentry_disk_transport.h"
 }
 
+#include <chrono>
+#include <thread>
+
 #ifdef __GNUC__
 #    pragma GCC diagnostic push
 #    pragma GCC diagnostic ignored "-Wpedantic"
@@ -339,6 +342,8 @@ static int
 breakpad_backend_startup(
     sentry_backend_t *backend, const sentry_options_t *options)
 {
+    std::this_thread::sleep_for(std::chrono::milliseconds(4));
+
     sentry_path_t *current_run_folder = options->run->run_path;
 
 #ifdef SENTRY_PLATFORM_WINDOWS
