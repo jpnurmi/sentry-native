@@ -490,7 +490,7 @@ jobs:
           path: coverage/
 
       - name: "Upload to codecov.io"
-        if: ${{ contains(env['RUN_ANALYZER'], 'kcov') }}
+        if: ${{ contains(env['RUN_ANALYZER'], 'llvm-cov') }}
         uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # pin@v7.0.0
         with:
           directory: coverage
