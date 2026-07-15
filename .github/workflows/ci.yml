@@ -118,12 +118,12 @@ jobs:
             CXX: clang++-22
             ERROR_ON_WARNINGS: 1
             RUN_ANALYZER: asan,llvm-cov
-          # - name: Linux Arm64 (clang 22 + asan + llvm-cov)
-          #   os: ubuntu-26.04-arm
-          #   CC: clang-22
-          #   CXX: clang++-22
-          #   ERROR_ON_WARNINGS: 1
-          #   RUN_ANALYZER: asan,llvm-cov
+          - name: Linux Arm64 (clang 22 + asan + llvm-cov)
+            os: ubuntu-26.04-arm
+            CC: clang-22
+            CXX: clang++-22
+            ERROR_ON_WARNINGS: 1
+            RUN_ANALYZER: asan,llvm-cov
           # - name: Linux (clang 20 + tsan)
           #   os: ubuntu-24.04
           #   CC: clang-20
@@ -174,13 +174,13 @@ jobs:
           #   ERROR_ON_WARNINGS: 1
           #   SYSTEM_VERSION_COMPAT: 0
           #   CMAKE_DEFINES: -DCMAKE_OSX_ARCHITECTURES=arm64;x86_64
-          # - name: macOS 15 (clang 18 + asan + llvm-cov)
-          #   os: macos-15-large
-          #   CC: clang
-          #   CXX: clang++
-          #   ERROR_ON_WARNINGS: 1
-          #   SYSTEM_VERSION_COMPAT: 0
-          #   RUN_ANALYZER: asan,llvm-cov
+          - name: macOS 15 (clang 18 + asan + llvm-cov)
+            os: macos-15 # -large
+            CC: clang
+            CXX: clang++
+            ERROR_ON_WARNINGS: 1
+            SYSTEM_VERSION_COMPAT: 0
+            RUN_ANALYZER: asan,llvm-cov
           # - name: macOS 26 (arm64e + PAC test)
           #   os: macos-26
           #   ERROR_ON_WARNINGS: 1
@@ -356,7 +356,7 @@ jobs:
         run: echo $(brew --prefix llvm@15)/bin >> $GITHUB_PATH
 
       - name: Expose llvm@18 PATH for Mac
-        if: ${{ runner.os == 'macOS' && matrix.os == 'macos-15-large' && matrix.RUN_ANALYZER == 'asan,llvm-cov' }}
+        if: ${{ runner.os == 'macOS' && matrix.os == 'macos-15' && matrix.RUN_ANALYZER == 'asan,llvm-cov' }}
         run: echo $(brew --prefix llvm@18)/bin >> $GITHUB_PATH
 
       - name: Set macOS SDKROOT
@@ -490,7 +490,7 @@ jobs:
           path: coverage/
 
       - name: "Upload to codecov.io"
-        if: ${{ contains(env['RUN_ANALYZER'], 'llvm-cov') }}
+        if: ${{ contains(env['RUN_ANALYZER'], 'cov') }}
         uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # pin@v7.0.0
         with:
           directory: coverage
