@@ -204,3 +204,27 @@ def test_benchmark_contexts(backend, cmake, httpserver, gbenchmark):
         gbenchmark,
         f"Contexts ({backend})",
     )
+
+
+@pytest.mark.parametrize("frame_count", [0, 20, 100])
+def test_benchmark_scope_event(frame_count, cmake, httpserver, gbenchmark):
+    run_benchmark(
+        f"^benchmark_scope_event/{frame_count}$",
+        "none",
+        cmake,
+        httpserver,
+        gbenchmark,
+        f"Events ({frame_count} frames)",
+    )
+
+
+@pytest.mark.parametrize("span_count", [0, 20, 100])
+def test_benchmark_scope_transaction(span_count, cmake, httpserver, gbenchmark):
+    run_benchmark(
+        f"^benchmark_scope_transaction/{span_count}$",
+        "none",
+        cmake,
+        httpserver,
+        gbenchmark,
+        f"Transactions ({span_count} spans)",
+    )
