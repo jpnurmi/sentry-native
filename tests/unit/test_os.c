@@ -415,3 +415,41 @@ SENTRY_TEST(sigaltstack)
     }
 #endif
 }
+
+SENTRY_TEST(riscv64_registers)
+{
+#if defined(SENTRY_PLATFORM_LINUX) && defined(__riscv) && __riscv_xlen == 64
+    ucontext_t uctx = { 0 };
+    uctx.uc_mcontext.__gregs[REG_PC] = 0x123456789;
+    uctx.uc_mcontext.__gregs[REG_RA] = 0x23456789a;
+    uctx.uc_mcontext.__gregs[REG_SP] = 0x3456789ab;
+    uctx.uc_mcontext.__gregs[REG_S0] = 0x456789abc;
+    uctx.uc_mcontext.__gregs[31] = 0x56789abcd;
+
+    TEST_CHECK(sentry__ucontext_get_ip(&uctx) == 0x123456789);
+    TEST_CHECK(sentry__ucontext_get_sp(&uctx) == 0x3456789ab);
+
+    sentry_ucontext_t context = { 0 };
+    context.user_context = &uctx;
+    sentry_value_t registers = sentry__build_registers(&context);
+    TEST_CHECK_INT_EQUAL(sentry_value_get_length(registers), 32);
+    TEST_CHECK_STRING_EQUAL(
+        sentry_value_as_string(sentry_value_get_by_key(registers, "pc")),
+        "0x123456789");
+    TEST_CHECK_STRING_EQUAL(
+        sentry_value_as_string(sentry_value_get_by_key(registers, "ra")),
+        "0x23456789a");
+    TEST_CHECK_STRING_EQUAL(
+        sentry_value_as_string(sentry_value_get_by_key(registers, "sp")),
+        "0x3456789ab");
+    TEST_CHECK_STRING_EQUAL(
+        sentry_value_as_string(sentry_value_get_by_key(registers, "s0")),
+        "0x456789abc");
+    TEST_CHECK_STRING_EQUAL(
+        sentry_value_as_string(sentry_value_get_by_key(registers, "t6")),
+        "0x56789abcd");
+    sentry_value_decref(registers);
+#else
+    SKIP_TEST();
+#endif
+}

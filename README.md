@@ -71,7 +71,7 @@ The SDK bundle contains the following folders:
 
 The SDK currently supports and is tested on the following OS/Compiler variations:
 
-- Linux (x86, x64, arm32 and arm64) with GCC 9+ and Clang 11+
+- Linux (x86, x64, arm32, arm64 and riscv64) with GCC 9+ and Clang 11+
 - Windows (x86, x64 and arm64) with MSVC (Visual Studio 2022+) and LLVM-MinGW
 - macOS 15+ with Apple Clang and LLVM Clang 15+
 - Android API 21+ with NDK 23+
