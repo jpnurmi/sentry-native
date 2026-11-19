@@ -15,7 +15,23 @@ permissions:
   contents: write
 
 jobs:
+  changes:
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+    outputs:
+      skip: ${{ steps.skip-ci.outputs.skip }}
+    steps:
+      - id: skip-ci
+        uses: getsentry/github-workflows/skip-ci@e8f25dd65e06243d145a224daad5df6c7baa29d8
+        with:
+          paths: |
+            **/*.md
+
   benchmark:
+    needs: [changes]
+    if: ${{ needs.changes.outputs.skip != 'true' }}
     strategy:
       fail-fast: false
       matrix:
