@@ -13,6 +13,10 @@
 - Native/Linux: fix incorrect fault addresses in minidumps on 32-bit systems when the address has its highest bit set, and remove pointer-width compiler warnings. ([#2305](https://github.com/getsentry/sentry-native/pull/2305))
 - Windows: The thread stack guarantee warning now reports the actual stack reserve factor instead of repeating the expected one. ([#2313](https://github.com/getsentry/sentry-native/pull/2313))
 
+**Other**:
+
+- Just a test
+
 **Thank you**:
 
 - [Aureliolo](https://github.com/Aureliolo)

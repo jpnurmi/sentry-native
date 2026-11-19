@@ -1192,3 +1192,5 @@ if(SENTRY_BUILD_SHARED_LIBS)
 	    "$<$<PLATFORM_ID:Android>:-Wl,-z,max-page-size=16384>"
 	)
 endif()
+
+# foo
